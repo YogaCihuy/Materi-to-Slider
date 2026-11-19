@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#09090b" />
+  <title>SlideCraft — Materi jadi slide dalam hitungan detik</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { ink: '#09090b', panel: '#18181b', line: '#27272a', brand: '#10b981' },
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Arial', 'sans-serif'] },
+          boxShadow: { glow: '0 0 40px -12px rgba(16,185,129,.65)' }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    html, body { background: #09090b; }
+    body { font-family: 'Inter', ui-sans-serif, system-ui, Arial, sans-serif; }
+    ::selection { background: rgba(16, 185, 129, .35); color: #fff; }
+    * { -webkit-tap-highlight-color: transparent; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #09090b; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 8px; border: 2px solid #09090b; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    textarea { scrollbar-width: thin; }
+
+    .range { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 999px; background: #27272a; outline: none; }
+    .range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 999px; background: #10b981; border: 3px solid #09090b; box-shadow: 0 0 0 1px #10b981, 0 0 18px rgba(16,185,129,.5); cursor: grab; transition: transform .15s ease; }
+    .range::-webkit-slider-thumb:active { transform: scale(1.15); cursor: grabbing; }
+    .range::-moz-range-thumb { width: 16px; height: 16px; border: 3px solid #09090b; border-radius: 999px; background: #10b981; box-shadow: 0 0 0 1px #10b981; cursor: grab; }
+    .range::-moz-range-track { height: 6px; background: #27272a; border-radius: 999px; }
+
+    input[type="color"] { -webkit-appearance: none; appearance: none; border: none; background: transparent; cursor: pointer; padding: 0; }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: 1px solid #3f3f46; border-radius: 6px; }
+    input[type="color"]::-moz-color-swatch { border: 1px solid #3f3f46; border-radius: 6px; }
+
+    .slide-card { transition: transform .3s cubic-bezier(.2,.8,.2,1), border-color .3s ease, box-shadow .3s ease; }
+    .slide-card:hover { transform: translateY(-4px); border-color: rgba(16,185,129,.45); box-shadow: 0 20px 50px -24px rgba(16,185,129,.45), 0 10px 30px -20px rgba(0,0,0,.9); }
+
+    @keyframes shimmer { 100% { transform: translateX(100%); } }
+    .skeleton { position: relative; overflow: hidden; background: #18181b; }
+    .skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.055), transparent); animation: shimmer 1.6s infinite; }
+
+    @keyframes cardIn { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+    .card-enter { animation: cardIn .5s cubic-bezier(.2,.8,.2,1) both; }
+
+    @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .toast-in { animation: toastIn .25s ease-out both; }
+
+    @keyframes modalIn { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+    .modal-in { animation: modalIn .28s cubic-bezier(.2,.8,.2,1) both; }
+
+    .align-btn.is-active { border-color: rgba(16,185,129,.55); background: rgba(16,185,129,.12); color: #34d399; }
+
+    #editorCanvas { width: 100%; height: auto; display: block; touch-action: none; cursor: grab; }
+    #editorCanvas:active { cursor: grabbing; }
+  </style>
+</head>
+<body class="min-h-screen text-zinc-100 antialiased">
+  <div class="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(60%_45%_at_50%_0%,rgba(16,185,129,0.10),transparent_70%)]"></div>
+
+  <header class="sticky top-0 z-40 border-b border-line/70 bg-ink/80 backdrop-blur-xl">
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <a href="#" class="group flex items-center gap-3">
+        <span class="grid h-9 w-9 place-items-center rounded-xl border border-brand/30 bg-brand/10 text-brand transition group-hover:shadow-glow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/></svg>
+        </span>
+        <span class="leading-tight">
+          <span class="block text-[15px] font-semibold tracking-tight">SlideCraft<span class="text-brand">.</span></span>
+          <span class="block text-[11px] text-zinc-500">materi &rarr; slide 1:1</span>
+        </span>
+      </a>
+      <div class="hidden items-center gap-2 text-[11px] text-zinc-400 sm:flex">
+        <span class="rounded-full border border-line bg-panel px-3 py-1">Canvas 1080&times;1080</span>
+        <span class="rounded-full border border-line bg-panel px-3 py-1">PNG + ZIP</span>
+        <span class="rounded-full border border-brand/25 bg-brand/[0.07] px-3 py-1 text-brand">100% lokal</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-4 pb-24 sm:px-6">
+    <section class="mx-auto max-w-3xl pb-10 pt-14 text-center sm:pt-20">
+      <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-brand/25 bg-brand/[0.07] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-brand">
+        <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-brand"></span> Smart summarizer
+      </div>
+      <h1 class="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">Materi panjang jadi <span class="text-brand">slide</span><br class="hidden sm:block" /> siap posting.</h1>
+      <p class="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-zinc-400 sm:text-base">Tempel artikel, pilih jumlah slide, dan biarkan SlideCraft merangkum alurnya. Edit tiap slide langsung di canvas, lalu unduh semuanya sebagai ZIP.</p>
+    </section>
+
+    <section class="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+      <div class="rounded-3xl border border-line bg-panel p-4 sm:p-5">
+        <div class="mb-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="grid h-7 w-7 place-items-center rounded-lg bg-white/5 text-zinc-400">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+            </span>
+            <label for="material" class="text-sm font-semibold">Materi / artikel</label>
+          </div>
+          <button id="sampleBtn" type="button" class="rounded-lg px-2 py-1 text-xs text-zinc-500 transition hover:bg-white/5 hover:text-brand active:scale-95">Isi contoh</button>
+        </div>
+        <textarea id="material" rows="13" maxlength="20000" placeholder="Tempel catatan, artikel, atau rangkuman materi di sini. Semakin lengkap materinya, semakin enak alur storytelling-nya..." class="w-full resize-y rounded-2xl border border-line bg-ink/70 p-4 text-[15px] leading-relaxed text-zinc-200 placeholder:text-zinc-600 focus:border-brand/50 focus:outline-none focus:ring-4 focus:ring-brand/10"></textarea>
+        <div class="mt-2 flex items-center justify-between text-[11px] text-zinc-500">
+          <span>Semakin kaya materi, semakin enak alurnya.</span>
+          <span><span id="charCount">0</span> karakter</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-5 rounded-3xl border border-line bg-panel p-4 sm:p-5">
+        <div>
+          <div class="mb-2 flex items-center justify-between">
+            <label for="slideCount" class="text-sm font-semibold">Jumlah slide</label>
+            <span class="rounded-lg border border-brand/25 bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand"><span id="slideCountValue">10</span> slide</span>
+          </div>
+          <input id="slideCount" type="range" min="1" max="35" value="10" class="range" />
+          <div class="mt-1 flex justify-between text-[10px] text-zinc-600"><span>1</span><span>maks. 35</span></div>
+        </div>
+
+        <div class="h-px bg-line"></div>
+
+        <div>
+          <p class="mb-2 text-sm font-semibold">Gaya bahasa</p>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="style" value="santai" checked class="peer sr-only" />
+              <div class="h-full rounded-xl border border-line bg-ink/60 p-3 transition hover:border-zinc-600 peer-checked:border-brand/60 peer-checked:bg-brand/10 peer-checked:shadow-glow">
+                <p class="text-[13px] font-semibold text-zinc-200 peer-checked:text-brand">Santai &amp; Gaul</p>
+                <p class="mt-0.5 text-[11px] leading-snug text-zinc-500">Ngobrol sama teman</p>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="style" value="edukatif" class="peer sr-only" />
+              <div class="h-full rounded-xl border border-line bg-ink/60 p-3 transition hover:border-zinc-600 peer-checked:border-brand/60 peer-checked:bg-brand/10 peer-checked:shadow-glow">
+                <p class="text-[13px] font-semibold text-zinc-200 peer-checked:text-brand">Edukatif Singkat</p>
+                <p class="mt-0.5 text-[11px] leading-snug text-zinc-500">Rapi dan to the point</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="h-px bg-line"></div>
+
+        <div>
+          <div class="mb-2 flex items-center justify-between">
+            <p class="text-sm font-semibold">Karakter / stiker</p>
+            <span class="text-[10px] uppercase tracking-wider text-zinc-500">opsional</span>
+          </div>
+          <label class="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-line bg-ink/50 px-3 py-3 transition hover:border-brand/50 hover:bg-brand/5">
+            <input id="stickerInput" type="file" accept="image/png,image/webp" multiple class="hidden" />
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-zinc-400 transition group-hover:text-brand">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            </span>
+            <span class="min-w-0">
+              <span class="block text-[13px] font-medium">Upload PNG transparan</span>
+              <span class="block text-[11px] text-zinc-500">Bisa banyak ekspresi sekaligus</span>
+            </span>
+          </label>
+          <div id="stickerStrip" class="mt-3 flex gap-2 overflow-x-auto pb-1"></div>
+          <p class="mt-2 text-[11px] leading-relaxed text-zinc-500">Tanpa upload? 5 maskot default dipakai otomatis, posisinya bergantian kiri&ndash;kanan.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="mt-5 flex flex-col gap-3 rounded-3xl border border-line bg-panel/60 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+      <p class="text-[12px] leading-relaxed text-zinc-500">Render 1080&times;1080 px &middot; teks tajam &middot; karakter transparan &middot; ZIP siap posting</p>
+      <button id="generateBtn" type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-ink transition duration-200 hover:bg-emerald-400 hover:shadow-[0_0_45px_-10px_rgba(16,185,129,.85)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60">
+        <svg id="generateIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+        <span id="generateLabel">Generate Slide</span>
+      </button>
+    </div>
+
+    <section id="results" class="mt-16 scroll-mt-24">
+      <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-brand/80">Output</p>
+          <div class="mt-1 flex items-center gap-3">
+            <h2 class="text-2xl font-bold tracking-tight">Hasil Slide</h2>
+            <span id="resultCount" class="rounded-full border border-line bg-panel px-2.5 py-0.5 text-[11px] text-zinc-400">Belum ada</span>
+          </div>
+        </div>
+        <button id="zipBtn" type="button" disabled class="inline-flex items-center justify-center gap-2 rounded-xl border border-brand/40 bg-brand/10 px-4 py-2.5 text-xs font-bold text-brand transition hover:bg-brand/20 hover:shadow-[0_0_30px_-12px_rgba(16,185,129,.8)] active:scale-95 disabled:cursor-not-allowed disabled:border-line disabled:bg-panel disabled:text-zinc-600">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+          <span id="zipLabel">Download Semua (ZIP)</span>
+        </button>
+      </div>
+
+      <div id="progressWrap" class="mb-5 hidden rounded-2xl border border-line bg-panel px-4 py-3">
+        <div class="flex items-center justify-between text-[11px]">
+          <span id="progressText" class="text-zinc-400">Menyiapkan...</span>
+          <span id="progressPct" class="font-semibold text-brand">0%</span>
+        </div>
+        <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-line">
+          <div id="progressBar" class="h-full w-0 rounded-full bg-brand transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <div id="emptyState" class="rounded-3xl border border-dashed border-line bg-panel/40 px-6 py-16 text-center">
+        <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-line bg-ink/60 text-zinc-600">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M8 8h8M8 16h5"/></svg>
+        </div>
+        <p class="mt-4 text-sm font-semibold text-zinc-300">Belum ada slide</p>
+        <p class="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-zinc-500">Tempel materi di atas, atur jumlah slide, lalu tekan Generate Slide. Hasilnya muncul di sini.</p>
+      </div>
+
+      <div id="grid" class="grid hidden gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"></div>
+    </section>
+  </main>
+
+  <footer class="border-t border-line/70 py-8 text-center text-[11px] text-zinc-600">
+    SlideCraft &middot; semua proses berjalan di browser kamu, tanpa server.
+  </footer>
+
+  <!-- Slide editor -->
+  <div id="editorModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+    <div id="editorBackdrop" class="absolute inset-0 bg-black/75 backdrop-blur-sm"></div>
+    <div class="relative flex min-h-full items-start justify-center overflow-y-auto p-3 sm:items-center sm:p-6">
+      <div class="modal-in w-full max-w-5xl overflow-hidden rounded-3xl border border-line bg-panel shadow-2xl shadow-black/70">
+        <div class="flex items-start justify-between gap-4 border-b border-line px-4 py-4 sm:px-6">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 id="editorTitle" class="text-base font-bold">Edit Slide <span id="editorSlideNo" class="text-brand">01</span></h3>
+              <span class="rounded-full border border-line px-2 py-0.5 text-[10px] text-zinc-500">1080 &times; 1080</span>
+            </div>
+            <p class="mt-1 text-[11px] text-zinc-500">Geser kotak teks atau karakter langsung di canvas. Garis hijau = snap tengah.</p>
+          </div>
+          <button id="closeEditor" type="button" aria-label="Tutup editor" class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-line bg-ink/60 text-zinc-400 transition hover:border-zinc-600 hover:text-white active:scale-95">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </div>
+
+        <div class="grid lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div class="bg-ink/40 p-4 sm:p-5">
+            <div class="mx-auto max-w-[540px] overflow-hidden rounded-2xl border border-line bg-white shadow-inner">
+              <canvas id="editorCanvas" width="1080" height="1080"></canvas>
+            </div>
+            <div class="mx-auto mt-3 flex max-w-[540px] flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-[10px] text-zinc-500">
+              <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-brand"></span>Kotak teks</span>
+              <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-sky-400"></span>Karakter</span>
+              <span>Sentuh &amp; geser &middot; snap otomatis</span>
+            </div>
+          </div>
+
+          <div class="max-h-[72vh] space-y-5 overflow-y-auto border-t border-line p-4 sm:p-5 lg:border-l lg:border-t-0">
+            <!-- Teks -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400">Teks</p>
+                <span id="edWordCount" class="text-[10px] text-zinc-500">0 kata</span>
+              </div>
+              <textarea id="edText" rows="3" class="w-full resize-y rounded-xl border border-line bg-ink/70 p-3 text-[13px] leading-relaxed text-zinc-200 focus:border-brand/50 focus:outline-none focus:ring-2 focus:ring-brand/10"></textarea>
+              <div>
+                <div class="mb-1.5 flex items-center justify-between text-[11px]"><span class="text-zinc-400">Ukuran font</span><span id="edSizeLabel" class="text-zinc-500">64 px</span></div>
+                <input id="edSize" type="range" min="32" max="140" step="2" class="range" />
+              </div>
+              <div>
+                <div class="mb-1.5 flex items-center justify-between text-[11px]"><span class="text-zinc-400">Lebar maksimal teks</span><span id="edWrapLabel" class="text-zinc-500">880 px</span></div>
+                <input id="edWrap" type="range" min="320" max="960" step="20" class="range" />
+              </div>
+              <div class="flex items-stretch gap-2">
+                <div class="flex flex-1 overflow-hidden rounded-xl border border-line bg-ink/60">
+                  <button type="button" data-align="left" class="align-btn flex-1 px-2 py-2 text-zinc-400 transition hover:text-white" title="Rata kiri">
+                    <svg class="mx-auto" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg>
+                  </button>
+                  <button type="button" data-align="center" class="align-btn flex-1 border-x border-line px-2 py-2 text-zinc-400 transition hover:text-white" title="Rata tengah">
+                    <svg class="mx-auto" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M5 18h14"/></svg>
+                  </button>
+                  <button type="button" data-align="right" class="align-btn flex-1 px-2 py-2 text-zinc-400 transition hover:text-white" title="Rata kanan">
+                    <svg class="mx-auto" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M10 12h10M7 18h13"/></svg>
+                  </button>
+                </div>
+                <label class="flex w-[104px] items-center justify-between rounded-xl border border-line bg-ink/60 px-2.5 py-1.5 text-[10px] text-zinc-400">
+                  Warna
+                  <input id="edColor" type="color" value="#000000" class="h-6 w-8 rounded-md" />
+                </label>
+              </div>
+            </div>
+
+            <div class="h-px bg-line"></div>
+
+            <!-- Tampilan -->
+            <div class="space-y-3">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400">Tampilan</p>
+              <label class="flex items-center justify-between rounded-xl border border-line bg-ink/60 px-3 py-2 text-[11px] text-zinc-400">
+                Warna background
+                <input id="edBg" type="color" value="#ffffff" class="h-6 w-9 rounded-md" />
+              </label>
+              <div id="bgSwatches" class="flex flex-wrap gap-1.5">
+                <button type="button" data-bg="#FFFFFF" class="h-7 w-7 rounded-lg border border-zinc-600 transition hover:ring-2 hover:ring-brand/50" style="background:#FFFFFF" title="Putih"></button>
+                <button type="button" data-bg="#F4F4F5" class="h-7 w-7 rounded-lg border border-zinc-600 transition hover:ring-2 hover:ring-brand/50" style="background:#F4F4F5" title="Abu terang"></button>
+                <button type="button" data-bg="#ECFDF5" class="h-7 w-7 rounded-lg border border-zinc-600 transition hover:ring-2 hover:ring-brand/50" style="background:#ECFDF5" title="Mint"></button>
+                <button type="button" data-bg="#E0F2FE" class="h-7 w-7 rounded-lg border border-zinc-600 transition hover:ring-2 hover:ring-brand/50" style="background:#E0F2FE" title="Langit"></button>
+                <button type="button" data-bg="#FEF3C7" class="h-7 w-7 rounded-lg border border-zinc-600 transition hover:ring-2 hover:ring-brand/50" style="background:#FEF3C7" title="Krem"></button>
+                <button type="button" data-bg="#0B1120" class="h-7 w-7 rounded-lg border border-zinc-600 transition hover:ring-2 hover:ring-brand/50" style="background:#0B1120" title="Gelap"></button>
+              </div>
+            </div>
+
+            <div class="h-px bg-line"></div>
+
+            <!-- Karakter -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400">Karakter</p>
+                <button id="edFlip" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-line bg-ink/60 px-2.5 py-1.5 text-[10px] font-medium text-zinc-300 transition hover:border-brand/50 hover:text-brand active:scale-95">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M8 7 4 12l4 5M16 7l4 5-4 5"/></svg>
+                  Flip <span id="edFlipState" class="text-zinc-500">off</span>
+                </button>
+              </div>
+              <div>
+                <div class="mb-1.5 flex items-center justify-between text-[11px]"><span class="text-zinc-400">Ukuran karakter</span><span id="edScaleLabel" class="text-zinc-500">100%</span></div>
+                <input id="edScale" type="range" min="0.4" max="2" step="0.05" class="range" />
+              </div>
+              <div id="edStickerGallery" class="grid grid-cols-6 gap-1.5"></div>
+              <p class="text-[10px] leading-relaxed text-zinc-600">Pilih gambar untuk mengganti karakter slide ini. Stiker transparan paling rapi.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col-reverse gap-2 border-t border-line bg-ink/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <button id="applyAll" type="button" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-line bg-panel px-3 py-2 text-[11px] font-semibold text-zinc-300 transition hover:border-brand/50 hover:text-brand active:scale-95 disabled:cursor-not-allowed disabled:opacity-60">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            Terapkan warna &amp; font ke semua
+          </button>
+          <div class="flex gap-2">
+            <button id="cancelEdit" type="button" class="flex-1 rounded-xl border border-line bg-panel px-4 py-2.5 text-xs font-semibold text-zinc-300 transition hover:border-zinc-600 hover:text-white active:scale-95 sm:flex-none">Batal</button>
+            <button id="saveEdit" type="button" class="flex-1 rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-ink transition hover:bg-emerald-400 hover:shadow-[0_0_30px_-10px_rgba(16,185,129,.8)] active:scale-95 sm:flex-none">Simpan Perubahan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="pointer-events-none fixed bottom-5 left-1/2 z-[60] hidden w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0"></div>
+
+  <script>
+    'use strict';
+
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    const W = 1080;
+    const H = 1080;
+    const BASE_STICKER_H = 380;
+    const MAX_SLIDES = 35;
+
+    const state = {
+      slides: [],
+      stickers: [],
+      editing: -1,
+      draft: null,
+      generating: false,
+      drag: null,
+      boxes: null,
+      guides: { v: false, h: false },
+      selected: 'text'
+    };
+
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const nextFrame = () => new Promise((resolve) => setTimeout(resolve, 16));
+
+    function escapeHTML(value = '') {
+      return String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    let toastTimer;
+    function toast(message, tone = 'ok') {
+      const el = $('#toast');
+      const styles = {
+        ok: 'border-brand/40 bg-[#0f1f19] text-emerald-200',
+        warn: 'border-amber-500/40 bg-[#231a0b] text-amber-200',
+        error: 'border-rose-500/40 bg-[#231014] text-rose-200'
+      };
+      el.className = 'pointer-events-none fixed bottom-5 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0';
+      el.innerHTML = `<div class="toast-in flex items-start gap-2 rounded-xl border px-3.5 py-2.5 text-xs shadow-xl shadow-black/50 backdrop-blur ${styles[tone] || styles.ok}">
+          <span class="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-current"></span>
+          <span class="leading-relaxed">${escapeHTML(message)}</span>
+        </div>`;
+      el.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.add('hidden'), 3400);
+    }
+
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Gagal membaca file'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function downloadURL(url, filename) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+
+    const MASCOT_PALETTES = [
+      { hair: '#0f766e', shirt: '#10b981', shirtDark: '#059669', skin: '#ffe6d5' },
+      { hair: '#1e40af', shirt: '#3b82f6', shirtDark: '#2563eb', skin: '#ffe6d5' },
+      { hair: '#5b21b6', shirt: '#8b5cf6', shirtDark: '#7c3aed', skin: '#ffdfc4' },
+      { hair: '#b45309', shirt: '#f59e0b', shirtDark: '#d97706', skin: '#ffe6d5' },
+      { hair: '#9f1239', shirt: '#f43f5e', shirtDark: '#e11d48', skin: '#ffdfc4' }
+    ];
+
+    function mascotSVG(index) {
+      const p = MASCOT_PALETTES[index % MASCOT_PALETTES.length];
+      const ink = '#0b1220';
+      const face = index % 5;
+
+      const eyes = face === 1
+        ? `<path d="M162 184l5 11 12 2-9 9 2 12-10-6-10 6 2-12-9-9 12-2z" fill="${ink}"/><path d="M238 184l5 11 12 2-9 9 2 12-10-6-10 6 2-12-9-9 12-2z" fill="${ink}"/>`
+        : face === 2
+          ? `<path d="M146 206q16-20 32 0" fill="none" stroke="${ink}" stroke-width="9"/><ellipse cx="238" cy="202" rx="15" ry="19" fill="${ink}"/><circle cx="243" cy="195" r="5" fill="#fff"/>`
+          : face === 3
+            ? `<circle cx="162" cy="202" r="9" fill="${ink}"/><circle cx="238" cy="202" r="9" fill="${ink}"/><path d="M236 166q14-9 27-1" fill="none" stroke="${ink}" stroke-width="6"/>`
+            : `<ellipse cx="162" cy="202" rx="15" ry="19" fill="${ink}"/><circle cx="167" cy="195" r="5" fill="#fff"/><ellipse cx="238" cy="202" rx="15" ry="19" fill="${ink}"/><circle cx="243" cy="195" r="5" fill="#fff"/>`;
+
+      const mouth = face === 1 || face === 4
+        ? `<ellipse cx="200" cy="242" rx="14" ry="17" fill="${ink}"/><ellipse cx="200" cy="250" rx="7" ry="5" fill="#fb7185" stroke="none"/>`
+        : face === 3
+          ? `<path d="M188 244h24" stroke-width="8"/>`
+          : `<path d="M182 238q18 18 36 0" fill="none" stroke-width="8"/>`;
+
+      const leftArm = face === 1
+        ? `<g transform="translate(120 340) rotate(32)"><rect x="-18" y="-8" width="36" height="92" rx="18" fill="${p.shirt}"/><circle cx="0" cy="-20" r="21" fill="${p.skin}"/></g>`
+        : `<rect x="110" y="336" width="36" height="96" rx="18" fill="${p.shirt}" transform="rotate(14 128 384)"/><circle cx="119" cy="436" r="20" fill="${p.skin}"/>`;
+
+      const rightArm = face === 3
+        ? `<rect x="254" y="336" width="36" height="96" rx="18" fill="${p.shirt}" transform="rotate(-14 272 384)"/><circle cx="281" cy="436" r="20" fill="${p.skin}"/>`
+        : face === 4
+          ? `<g transform="translate(288 356) rotate(-12)"><rect x="-22" y="-16" width="46" height="42" rx="19" fill="${p.skin}"/><rect x="1" y="-44" width="17" height="34" rx="8.5" fill="${p.skin}"/></g>`
+          : `<g transform="translate(280 338) rotate(-40)"><rect x="-18" y="-8" width="36" height="92" rx="18" fill="${p.shirt}"/><circle cx="0" cy="-20" r="21" fill="${p.skin}"/></g>`;
+
+      const thought = face === 3
+        ? `<g fill="#fff" stroke="${ink}" stroke-width="6"><circle cx="306" cy="128" r="7"/><circle cx="328" cy="101" r="11"/><circle cx="354" cy="66" r="17"/></g>`
+        : '';
+
+      const clipY = face === 3 ? 178 : 146;
+      const clipX = face === 3 ? 268 : 296;
+
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="480" viewBox="0 0 400 480">
+        <ellipse cx="200" cy="462" rx="120" ry="15" fill="#0b1220" opacity=".08"/>
+        <g stroke="${ink}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="138" y="420" width="48" height="38" rx="19" fill="${p.shirtDark}"/>
+          <rect x="214" y="420" width="48" height="38" rx="19" fill="${p.shirtDark}"/>
+          <path d="M130 338c0-32 32-52 70-52s70 20 70 52l8 70c3 24-14 36-32 36H154c-18 0-35-12-32-36z" fill="${p.shirt}"/>
+          <path d="M176 292q24 20 48 0" fill="none" stroke-width="7"/>
+          ${leftArm}
+          ${rightArm}
+          <circle cx="88" cy="202" r="20" fill="${p.skin}"/>
+          <circle cx="312" cy="202" r="20" fill="${p.skin}"/>
+          <circle cx="200" cy="194" r="106" fill="${p.skin}"/>
+          <path d="M96 196c0-64 44-110 104-110s104 46 104 110c-16-34-40-48-58-50-24 20-74 26-108 2-18 12-30 26-42 48z" fill="${p.hair}"/>
+          <path d="M100 184c-10 32-8 64 4 88" fill="none" stroke="${p.hair}" stroke-width="20"/>
+          <path d="M300 184c10 32 8 64-4 88" fill="none" stroke="${p.hair}" stroke-width="20"/>
+          <path d="M202 80c2-26 22-38 42-32-16 6-22 18-24 32" fill="${p.hair}" stroke-width="6"/>
+          <circle cx="${clipX}" cy="${clipY}" r="13" fill="${p.shirt}" stroke-width="6"/>
+          <ellipse cx="146" cy="232" rx="17" ry="9" fill="#fb7185" opacity=".45" stroke="none"/>
+          <ellipse cx="254" cy="232" rx="17" ry="9" fill="#fb7185" opacity=".45" stroke="none"/>
+          ${eyes}
+          ${mouth}
+          ${thought}
+        </g>
+      </svg>`;
+
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    const DEFAULT_MASCOTS = [
+      { id: 'mascot-0', name: 'Halo', src: mascotSVG(0), custom: false },
+      { id: 'mascot-1', name: 'Semangat', src: mascotSVG(1), custom: false },
+      { id: 'mascot-2', name: 'Wink', src: mascotSVG(2), custom: false },
+      { id: 'mascot-3', name: 'Mikir', src: mascotSVG(3), custom: false },
+      { id: 'mascot-4', name: 'Jempol', src: mascotSVG(4), custom: false }
+    ];
+
+    function renderStickerStrip() {
+      const strip = $('#stickerStrip');
+      strip.innerHTML = state.stickers.map((s) => `
+        <div class="relative shrink-0" title="${escapeHTML(s.name)}">
+          <div class="h-14 w-14 overflow-hidden rounded-xl border ${s.custom ? 'border-brand/50' : 'border-line'} bg-white/95">
+            <img src="${s.src}" alt="${escapeHTML(s.name)}" class="h-full w-full object-contain p-0.5" />
+          </div>
+          ${s.custom ? '<span class="absolute -right-1 -top-1 rounded-full bg-brand px-1 text-[8px] font-bold text-ink">NEW</span>' : ''}
+        </div>`).join('');
+    }
+
+    const SAMPLE_TEXT = `Belajar efektif bukan soal duduk paling lama di depan buku, tapi soal bagaimana otak memproses informasi. Penelitian menunjukkan bahwa teknik Pomodoro, yaitu belajar 25 menit lalu istirahat 5 menit, membantu menjaga fokus dan mengurangi kelelahan mental. Setelah empat sesi, ambil istirahat panjang 15 sampai 30 menit.
+
+Selain itu, ada konsep spaced repetition. Materi yang sama diulang pada interval yang makin jauh: besok, tiga hari lagi, seminggu lagi, lalu sebulan lagi. Cara ini memanfaatkan curve of forgetting, yaitu kecenderungan otak melupakan informasi baru dengan cepat jika tidak diulang. Dengan mengulang tepat sebelum lupa, ingatan jadi lebih tahan lama.
+
+Active recall juga penting. Daripada membaca ulang catatan, coba tutup buku dan jelaskan materinya dengan kata-kata sendiri. Teknik Feynman menyarankan kita menjelaskan konsep ke orang lain atau ke anak kecil. Jika ada bagian yang tersendat, di situlah celah pemahaman kita.
+
+Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelum ujian karena otak butuh waktu memindahkan informasi dari memori jangka pendek ke jangka panjang. Terakhir, atur lingkungan belajar: meja rapi, notifikasi mati, dan satu tujuan jelas per sesi. Konsistensi 30 menit setiap hari lebih efektif daripada 8 jam sekali seminggu.`;
+    const STOPWORDS = new Set(('yang dan di ke dari untuk dengan pada dalam adalah itu ini akan juga atau karena agar bisa dapat lebih sangat para kita kamu saya aku mereka dia tidak bukan sudah telah masih oleh sebagai saat ketika jika maka sehingga namun tetapi tapi serta antara secara hanya saja pun per tentang bagi tanpa hingga sampai setelah sebelum selama meskipun walaupun bahkan justru perlu harus ingin membuat jadi menjadi memiliki punya banyak sedikit semua setiap beberapa suatu sebuah tersebut yaitu misalnya contohnya biasanya kemudian lalu sekarang nanti juga merupakan sedang belum jangan mari ayo ada the of to in and is are for on with as by at or be that this it not you we they he she from will can was were has have had but if than then so such into over under about more most other some any each').split(/\s+/).filter(Boolean));
+
+    function wordsOf(text) {
+      return String(text).match(/[\p{L}\p{N}][\p{L}\p{N}'’\-]*/gu) || [];
+    }
+
+    function tidy(text) {
+      return String(text).replace(/\s+/g, ' ').replace(/\s+([,.!?;:])/g, '$1').trim();
+    }
+
+    function capitalizeFirst(text) {
+      const t = String(text).trim();
+      if (!t) return t;
+      return t.charAt(0).toUpperCase() + t.slice(1);
+    }
+
+    function lowerFirst(text) {
+      const t = String(text).trim();
+      if (!t || /^[A-Z]{2,}/.test(t)) return t;
+      return t.charAt(0).toLowerCase() + t.slice(1);
+    }
+
+    function stripTrailingPeriod(text) {
+      return String(text).replace(/[.;:,]+$/g, '').trim();
+    }
+
+    function condense(text, max = 24) {
+      const clean = tidy(String(text)
+        .replace(/\[[^\]]*\]/g, ' ')
+        .replace(/https?:\/\/\S+/g, ' ')
+        .replace(/^[\s•*\-–—\d.)]+/, ''));
+      const words = clean.split(' ').filter(Boolean);
+      if (words.length <= 25) return stripTrailingPeriod(clean);
+      const limit = clamp(max, 8, 25);
+      let slice = words.slice(0, limit);
+      for (let i = slice.length - 1; i >= Math.floor(limit * 0.6); i -= 1) {
+        if (/[.!?]$/.test(slice[i - 1] || '') || /[,;:]$/.test(slice[i - 1] || '')) {
+          slice = slice.slice(0, i);
+          break;
+        }
+      }
+      return stripTrailingPeriod(slice.join(' '));
+    }
+
+    function splitSentences(raw) {
+      const blocks = String(raw).replace(/\r/g, '').split(/\n+/);
+      const out = [];
+      for (const block of blocks) {
+        const cleaned = block
+          .replace(/^\s*[-•*–—]+\s*/, '')
+          .replace(/^\s*\d+[.)]\s*/, '')
+          .trim();
+        if (!cleaned) continue;
+        const parts = cleaned.split(/(?<=[.!?])\s+/).flatMap((p) => p.split(/\s*;\s+/));
+        for (const part of parts) {
+          const sentence = tidy(part);
+          if (wordsOf(sentence).length >= 3) out.push(sentence);
+        }
+      }
+      if (!out.length) {
+        return tidy(raw).split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+      }
+      return out;
+    }
+
+    function keywordFreq(sentences) {
+      const freq = new Map();
+      for (const sentence of sentences) {
+        for (const rawWord of wordsOf(sentence.toLowerCase())) {
+          const word = rawWord.replace(/[’']s$/, '');
+          if (word.length < 4 || STOPWORDS.has(word) || /^\d+$/.test(word)) continue;
+          freq.set(word, (freq.get(word) || 0) + 1);
+        }
+      }
+      return freq;
+    }
+
+    function scoreSentence(sentence, freq) {
+      const content = wordsOf(sentence.toLowerCase()).filter((w) => !STOPWORDS.has(w));
+      let score = 0;
+      for (const word of content) score += (freq.get(word) || 0) * (word.length > 7 ? 1.35 : 1);
+      score /= Math.sqrt(Math.max(content.length, 1));
+      if (/\d/.test(sentence)) score += 2.2;
+      if (sentence.length > 220) score -= (sentence.length - 220) / 90;
+      return score;
+    }
+
+    const TOPIC_SKIP = new Set('menit jam hari minggu bulan tahun sesi kali orang bagian hal cara contoh penelitian menunjukkan halaman angka waktu proses biasanya pertama kedua terakhir penting banyak sedikit lebih sangat'.split(/\s+/));
+
+    function makeTopic(freq) {
+      const candidates = [...freq.entries()]
+        .filter(([word]) => word.length >= 4 && !TOPIC_SKIP.has(word))
+        .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length);
+      return candidates.length ? candidates[0][0] : '';
+    }
+
+    function makeHook(topic, style) {
+      const t = lowerFirst(topic || 'materi ini');
+      return style === 'santai'
+        ? `Kenapa ${t} itu penting banget buat kamu?`
+        : `Pahami ${t} dalam satu menit.`;
+    }
+
+    function makeConclusion(core, style, topic) {
+      const c = lowerFirst(stripTrailingPeriod(core) || topic || 'materi ini');
+      return style === 'santai' ? `Intinya: ${c}.` : `Kesimpulan: ${c}.`;
+    }
+
+    const CONNECTORS = ['Jadi gini,', 'Nah,', 'Simpelnya,', 'Coba bayangin,', 'Intinya,', 'Faktanya,'];
+
+    function prepBody(sentence, style, index) {
+      const core = capitalizeFirst(condense(sentence, 21));
+      if (style === 'santai') {
+        const opener = CONNECTORS[(index * 5 + 1) % CONNECTORS.length];
+        const joined = `${opener} ${lowerFirst(core)}`;
+        if (wordsOf(joined).length <= 25) return joined;
+      }
+      return core;
+    }
+
+    function expandUnits(units, target) {
+      const out = units.slice();
+      let guard = 0;
+      while (out.length < target && guard < 200) {
+        guard += 1;
+        let bestIdx = 0;
+        let bestLen = 0;
+        out.forEach((unit, i) => {
+          const len = wordsOf(unit).length;
+          if (len > bestLen) { bestLen = len; bestIdx = i; }
+        });
+        if (bestLen < 12) break;
+        const words = out[bestIdx].split(' ');
+        const half = Math.ceil(words.length / 2);
+        out.splice(bestIdx, 1, words.slice(0, half).join(' '), words.slice(half).join(' '));
+      }
+      return out;
+    }
+
+    function fillerLine(topic, freq, index) {
+      const keywords = [...freq.keys()].slice(0, 12);
+      if (!keywords.length) return `Poin ${index + 1}: perhatikan bagian penting dari ${topic}.`;
+      const a = keywords[index % keywords.length];
+      const b = keywords[(index * 3 + 1) % keywords.length];
+      return a === b
+        ? `Perdalam pemahaman soal ${a} supaya ${topic} lebih mudah dipakai.`
+        : `Hubungkan ${a} dengan ${b} supaya ${topic} lebih mudah dipahami.`;
+    }
+
+    function summarize(raw, count, style) {
+      const n = clamp(Number(count) || 1, 1, MAX_SLIDES);
+      const sentences = splitSentences(raw).filter((s) => wordsOf(s).length >= 3);
+
+      if (!sentences.length) {
+        const fallback = capitalizeFirst(condense(raw, 24)) || 'Materi belum cukup untuk dirangkum.';
+        return Array.from({ length: n }, (_, i) => (i === 0 ? fallback : `Poin ${i + 1}: ${fallback}`));
+      }
+
+      const freq = keywordFreq(sentences);
+      const topic = makeTopic(freq) || 'materi ini';
+      const scored = sentences.map((text, idx) => ({
+        text,
+        idx,
+        score: scoreSentence(text, freq) + (idx === 0 ? 1.5 : 0)
+      }));
+      const best = [...scored].sort((a, b) => b.score - a.score)[0];
+      const core = capitalizeFirst(condense(best.text, 20));
+
+      if (n === 1) return [core];
+
+      const hook = makeHook(topic, style);
+      const conclusion = makeConclusion(core, style, topic);
+      if (n === 2) return [hook, conclusion];
+
+      const bodyCount = n - 2;
+      let units = sentences.slice();
+      if (units.length < bodyCount) units = expandUnits(units, bodyCount);
+
+      const ranked = units
+        .map((text, idx) => ({ text, idx, score: scoreSentence(text, freq) + (idx === 0 ? 1.2 : 0) }))
+        .filter((unit) => unit.text !== best.text)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, bodyCount)
+        .sort((a, b) => a.idx - b.idx);
+
+      while (ranked.length < bodyCount) {
+        ranked.push({ text: fillerLine(topic, freq, ranked.length), idx: 999 + ranked.length });
+      }
+
+      const bodies = ranked.map((unit, i) => prepBody(unit.text, style, i));
+      return [hook, ...bodies, conclusion];
+    }
+    const imgCache = new Map();
+    function loadImage(src) {
+      if (imgCache.has(src)) return imgCache.get(src);
+      const promise = new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Gagal memuat gambar'));
+        img.src = src;
+      });
+      imgCache.set(src, promise);
+      return promise;
+    }
+
+    let fontsReady = false;
+    async function ensureFonts() {
+      if (fontsReady) return;
+      try {
+        await Promise.all([
+          document.fonts.load('800 64px Inter'),
+          document.fonts.load('600 26px Inter'),
+          document.fonts.load('400 16px Inter')
+        ]);
+        await document.fonts.ready;
+      } catch (err) {
+        fontsReady = true;
+        return;
+      }
+      fontsReady = true;
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      const rad = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rad, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rad);
+      ctx.arcTo(x + w, y + h, x, y + h, rad);
+      ctx.arcTo(x, y + h, x, y, rad);
+      ctx.arcTo(x, y, x + w, y, rad);
+      ctx.closePath();
+    }
+
+    function layoutText(ctx, slide) {
+      ctx.font = `800 ${slide.size}px Inter, Arial, sans-serif`;
+      const maxW = clamp(slide.wrap, 200, 1000);
+      const words = String(slide.text || '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+      const lines = [];
+      let current = '';
+      for (const word of words) {
+        const test = current ? `${current} ${word}` : word;
+        if (!current || ctx.measureText(test).width <= maxW) current = test;
+        else { lines.push(current); current = word; }
+      }
+      if (current) lines.push(current);
+      if (!lines.length) lines.push('');
+      const lineHeight = slide.size * 1.26;
+      return { lines, lineHeight, totalH: lineHeight * lines.length, maxW };
+    }
+
+    function dashedBox(ctx, box, color, width = 2) {
+      const pad = 12;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = width > 2 ? 0.95 : 0.5;
+      ctx.lineWidth = width;
+      ctx.setLineDash([18, 12]);
+      ctx.strokeRect(box.x - pad, box.y - pad, box.w + pad * 2, box.h + pad * 2);
+      ctx.restore();
+    }
+
+    function drawGuide(ctx, axis) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(16,185,129,.85)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([14, 12]);
+      ctx.beginPath();
+      if (axis === 'v') { ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); }
+      else { ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    async function paintSlide(ctx, slide, opts = {}) {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = slide.bg || '#FFFFFF';
+      ctx.fillRect(0, 0, W, H);
+
+      let stickerBox = null;
+      const sticker = slide.sticker;
+      if (sticker && sticker.src) {
+        try {
+          const img = await loadImage(sticker.src);
+          const naturalW = img.naturalWidth || img.width || 1;
+          const naturalH = img.naturalHeight || img.height || 1;
+          let h = BASE_STICKER_H * (sticker.scale || 1);
+          let w = h * (naturalW / naturalH);
+          if (w > 720) {
+            const k = 720 / w;
+            w *= k;
+            h *= k;
+          }
+          ctx.save();
+          ctx.translate(sticker.x, sticker.y);
+          if (sticker.flip) ctx.scale(-1, 1);
+          ctx.drawImage(img, -w / 2, -h / 2, w, h);
+          ctx.restore();
+          stickerBox = { x: sticker.x - w / 2, y: sticker.y - h / 2, w, h };
+        } catch (err) {
+          stickerBox = null;
+        }
+      }
+
+      const { lines, lineHeight, totalH, maxW } = layoutText(ctx, slide);
+      const tx = slide.tx;
+      const ty = slide.ty;
+
+      ctx.save();
+      ctx.font = `800 ${slide.size}px Inter, Arial, sans-serif`;
+      ctx.fillStyle = slide.color || '#000000';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = slide.align || 'center';
+      let ax = tx;
+      if (slide.align === 'left') ax = tx - maxW / 2;
+      if (slide.align === 'right') ax = tx + maxW / 2;
+      lines.forEach((line, i) => {
+        ctx.fillText(line, ax, ty - totalH / 2 + lineHeight / 2 + i * lineHeight);
+      });
+      ctx.restore();
+
+      const barW = 76;
+      const barH = 9;
+      const barX = clamp(tx - barW / 2, 24, W - barW - 24);
+      const barY = clamp(ty - totalH / 2 - 48, 24, H - barH - 24);
+      roundRect(ctx, barX, barY, barW, barH, barH / 2);
+      ctx.fillStyle = '#10b981';
+      ctx.fill();
+
+      const textBox = { x: tx - maxW / 2, y: ty - totalH / 2, w: maxW, h: totalH };
+
+      if (opts.ui) {
+        if (opts.guides && opts.guides.v) drawGuide(ctx, 'v');
+        if (opts.guides && opts.guides.h) drawGuide(ctx, 'h');
+        dashedBox(ctx, textBox, '#10b981', opts.active === 'text' ? 4 : 2);
+        if (stickerBox) dashedBox(ctx, stickerBox, '#38bdf8', opts.active === 'sticker' ? 4 : 2);
+      }
+
+      return { text: textBox, sticker: stickerBox };
+    }
+
+    let workCanvas = null;
+    function getWorkCanvas() {
+      if (!workCanvas) {
+        workCanvas = document.createElement('canvas');
+        workCanvas.width = W;
+        workCanvas.height = H;
+      }
+      return workCanvas;
+    }
+
+    function setProgress(done, total, label) {
+      const wrap = $('#progressWrap');
+      wrap.classList.remove('hidden');
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      $('#progressText').textContent = label || `Merender slide ${done} dari ${total}`;
+      $('#progressPct').textContent = `${pct}%`;
+      $('#progressBar').style.width = `${pct}%`;
+    }
+
+    function hideProgress() {
+      $('#progressWrap').classList.add('hidden');
+      $('#progressBar').style.width = '0%';
+    }
+
+    async function renderAll(slides) {
+      await ensureFonts();
+      const canvas = getWorkCanvas();
+      const ctx = canvas.getContext('2d');
+      for (let i = 0; i < slides.length; i += 1) {
+        await paintSlide(ctx, slides[i], { index: i, total: slides.length });
+        slides[i].png = canvas.toDataURL('image/png');
+        setProgress(i + 1, slides.length, `Merender slide ${i + 1} dari ${slides.length}`);
+        if (i % 2 === 1) await nextFrame();
+      }
+    }
+
+    function makeSlide(text, index) {
+      const customs = state.stickers.filter((s) => s.custom);
+      const pool = customs.length ? customs : state.stickers;
+      const sticker = pool.length ? pool[index % pool.length] : null;
+      const wordCount = wordsOf(text).length;
+      const size = wordCount <= 8 ? 88 : wordCount <= 14 ? 74 : wordCount <= 20 ? 62 : 56;
+      const onRight = index % 2 === 0;
+      return {
+        text,
+        bg: '#FFFFFF',
+        color: '#000000',
+        size,
+        wrap: 880,
+        align: 'center',
+        tx: 540,
+        ty: 440,
+        sticker: {
+          src: sticker ? sticker.src : null,
+          x: onRight ? 852 : 228,
+          y: 852,
+          scale: 1,
+          flip: false
+        },
+        png: null
+      };
+    }
+
+    function showSkeletons(count) {
+      $('#emptyState').classList.add('hidden');
+      const grid = $('#grid');
+      grid.classList.remove('hidden');
+      $('#resultCount').textContent = `${count} slide`;
+      $('#zipBtn').disabled = true;
+      grid.innerHTML = Array.from({ length: count }).map(() => `
+        <div class="overflow-hidden rounded-2xl border border-line bg-panel">
+          <div class="skeleton aspect-square"></div>
+          <div class="space-y-2 border-t border-line p-3">
+            <div class="skeleton h-8 rounded-lg"></div>
+            <div class="skeleton h-3 w-2/3 rounded"></div>
+          </div>
+        </div>`).join('');
+    }
+
+    function cardHTML(slide, index) {
+      return `<article class="slide-card card-enter group overflow-hidden rounded-2xl border border-line bg-panel" style="animation-delay:${Math.min(index * 35, 420)}ms">
+        <div class="relative aspect-square overflow-hidden bg-white">
+          <img src="${slide.png}" alt="Slide ${index + 1}" draggable="false" class="h-full w-full object-cover" />
+          <span class="absolute left-3 top-3 rounded-full border border-white/20 bg-black/65 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-white backdrop-blur">${pad2(index + 1)}</span>
+        </div>
+        <div class="flex items-center gap-2 border-t border-line p-2.5">
+          <button type="button" data-edit="${index}" class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-ink/60 px-3 py-2 text-[11px] font-semibold text-zinc-300 transition hover:border-brand/50 hover:text-brand active:scale-95">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+            Edit Slide
+          </button>
+          <button type="button" data-download="${index}" title="Download PNG" class="inline-flex items-center gap-1.5 rounded-xl border border-line bg-ink/60 px-3 py-2 text-[11px] font-semibold text-zinc-300 transition hover:border-brand/50 hover:text-brand active:scale-95">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+            PNG
+          </button>
+        </div>
+      </article>`;
+    }
+
+    function renderGrid() {
+      const grid = $('#grid');
+      const empty = $('#emptyState');
+      const count = state.slides.length;
+      if (!count) {
+        grid.classList.add('hidden');
+        empty.classList.remove('hidden');
+        $('#resultCount').textContent = 'Belum ada';
+        $('#zipBtn').disabled = true;
+        return;
+      }
+      empty.classList.add('hidden');
+      grid.classList.remove('hidden');
+      grid.innerHTML = state.slides.map((slide, index) => cardHTML(slide, index)).join('');
+      $('#resultCount').textContent = `${count} slide`;
+      $('#zipBtn').disabled = false;
+    }
+    const editorCanvas = $('#editorCanvas');
+    let editorDrawToken = 0;
+
+    function updateFlipUI() {
+      const on = !!(state.draft && state.draft.sticker && state.draft.sticker.flip);
+      $('#edFlipState').textContent = on ? 'on' : 'off';
+      $('#edFlip').classList.toggle('border-brand/50', on);
+      $('#edFlip').classList.toggle('text-brand', on);
+    }
+
+    function syncEditorUI() {
+      const d = state.draft;
+      if (!d) return;
+      $('#edText').value = d.text;
+      $('#edSize').value = d.size;
+      $('#edSizeLabel').textContent = `${d.size} px`;
+      $('#edWrap').value = d.wrap;
+      $('#edWrapLabel').textContent = `${d.wrap} px`;
+      $('#edColor').value = d.color;
+      $('#edBg').value = d.bg;
+      $('#edScale').value = d.sticker ? d.sticker.scale : 1;
+      $('#edScaleLabel').textContent = `${Math.round((d.sticker ? d.sticker.scale : 1) * 100)}%`;
+      $('#edWordCount').textContent = `${wordsOf(d.text).length} kata`;
+      $$('.align-btn').forEach((btn) => btn.classList.toggle('is-active', btn.dataset.align === d.align));
+      updateFlipUI();
+    }
+
+    function buildStickerGallery() {
+      if (!state.draft) return;
+      const currentSrc = state.draft.sticker ? state.draft.sticker.src : null;
+      $('#edStickerGallery').innerHTML = state.stickers.map((s, i) => `
+        <button type="button" data-sticker-index="${i}" class="relative aspect-square overflow-hidden rounded-lg border ${s.src === currentSrc ? 'border-brand ring-2 ring-brand/30' : 'border-line'} bg-white transition hover:border-brand/60 active:scale-95" title="${escapeHTML(s.name)}">
+          <img src="${s.src}" alt="${escapeHTML(s.name)}" class="h-full w-full object-contain p-0.5" />
+        </button>`).join('');
+    }
+
+    async function drawEditor() {
+      if (!state.draft) return;
+      const token = ++editorDrawToken;
+      const ctx = editorCanvas.getContext('2d');
+      const boxes = await paintSlide(ctx, state.draft, {
+        index: state.editing,
+        total: state.slides.length || 1,
+        ui: true,
+        guides: state.guides,
+        active: state.drag ? state.drag.type : state.selected
+      });
+      if (token !== editorDrawToken || !state.draft) return;
+      state.boxes = boxes;
+    }
+
+    function openEditor(index) {
+      const slide = state.slides[index];
+      if (!slide) return;
+      state.editing = index;
+      state.draft = JSON.parse(JSON.stringify(slide));
+      delete state.draft.png;
+      state.selected = 'text';
+      state.drag = null;
+      state.guides = { v: false, h: false };
+      state.boxes = null;
+      $('#editorSlideNo').textContent = pad2(index + 1);
+      $('#editorModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      syncEditorUI();
+      buildStickerGallery();
+      drawEditor();
+      ensureFonts().then(() => {
+        if (state.editing === index) drawEditor();
+      });
+    }
+
+    function closeEditor() {
+      $('#editorModal').classList.add('hidden');
+      document.body.style.overflow = '';
+      state.draft = null;
+      state.drag = null;
+      state.boxes = null;
+      state.editing = -1;
+      editorDrawToken += 1;
+    }
+
+    function canvasPoint(ev) {
+      const rect = editorCanvas.getBoundingClientRect();
+      return {
+        x: (ev.clientX - rect.left) * (W / rect.width),
+        y: (ev.clientY - rect.top) * (H / rect.height)
+      };
+    }
+
+    function pointInBox(point, box, pad = 0) {
+      return !!box
+        && point.x >= box.x - pad
+        && point.x <= box.x + box.w + pad
+        && point.y >= box.y - pad
+        && point.y <= box.y + box.h + pad;
+    }
+
+    editorCanvas.addEventListener('pointerdown', (ev) => {
+      if (!state.draft || !state.boxes) return;
+      const point = canvasPoint(ev);
+      if (state.draft.sticker && state.draft.sticker.src && pointInBox(point, state.boxes.sticker, 16)) {
+        state.drag = {
+          type: 'sticker',
+          ox: point.x - state.draft.sticker.x,
+          oy: point.y - state.draft.sticker.y
+        };
+      } else if (pointInBox(point, state.boxes.text, 12)) {
+        state.drag = {
+          type: 'text',
+          ox: point.x - state.draft.tx,
+          oy: point.y - state.draft.ty
+        };
+      } else {
+        return;
+      }
+      state.selected = state.drag.type;
+      editorCanvas.setPointerCapture(ev.pointerId);
+      drawEditor();
+      ev.preventDefault();
+    });
+
+    editorCanvas.addEventListener('pointermove', (ev) => {
+      if (!state.drag || !state.draft) return;
+      const point = canvasPoint(ev);
+      let nx = clamp(point.x - state.drag.ox, 0, W);
+      let ny = clamp(point.y - state.drag.oy, 0, H);
+      const boxes = state.boxes;
+      let bounds = null;
+      if (state.drag.type === 'text' && boxes && boxes.text) {
+        bounds = { w: Math.min(boxes.text.w, W), h: Math.min(boxes.text.h, H) };
+      } else if (state.drag.type === 'sticker' && boxes && boxes.sticker) {
+        bounds = { w: Math.min(boxes.sticker.w, W), h: Math.min(boxes.sticker.h, H) };
+      }
+      if (bounds) {
+        nx = clamp(nx, bounds.w / 2, W - bounds.w / 2);
+        ny = clamp(ny, bounds.h / 2, H - bounds.h / 2);
+      }
+      state.guides = { v: false, h: false };
+      if (Math.abs(nx - W / 2) <= 16) { nx = W / 2; state.guides.v = true; }
+      if (Math.abs(ny - H / 2) <= 16) { ny = H / 2; state.guides.h = true; }
+      if (state.drag.type === 'text') {
+        state.draft.tx = nx;
+        state.draft.ty = ny;
+      } else if (state.draft.sticker) {
+        state.draft.sticker.x = nx;
+        state.draft.sticker.y = ny;
+      }
+      drawEditor();
+      ev.preventDefault();
+    });
+
+    function endDrag(ev) {
+      if (!state.drag) return;
+      state.drag = null;
+      state.guides = { v: false, h: false };
+      try { editorCanvas.releasePointerCapture(ev.pointerId); } catch (err) { /* already released */ }
+      drawEditor();
+    }
+    editorCanvas.addEventListener('pointerup', endDrag);
+    editorCanvas.addEventListener('pointercancel', endDrag);
+
+    $('#edText').addEventListener('input', (ev) => {
+      if (!state.draft) return;
+      state.draft.text = ev.target.value;
+      $('#edWordCount').textContent = `${wordsOf(ev.target.value).length} kata`;
+      drawEditor();
+    });
+
+    $('#edSize').addEventListener('input', (ev) => {
+      if (!state.draft) return;
+      state.draft.size = Number(ev.target.value);
+      $('#edSizeLabel').textContent = `${state.draft.size} px`;
+      drawEditor();
+    });
+
+    $('#edWrap').addEventListener('input', (ev) => {
+      if (!state.draft) return;
+      state.draft.wrap = Number(ev.target.value);
+      $('#edWrapLabel').textContent = `${state.draft.wrap} px`;
+      drawEditor();
+    });
+
+    $('#edColor').addEventListener('input', (ev) => {
+      if (!state.draft) return;
+      state.draft.color = ev.target.value;
+      drawEditor();
+    });
+
+    $('#edBg').addEventListener('input', (ev) => {
+      if (!state.draft) return;
+      state.draft.bg = ev.target.value;
+      drawEditor();
+    });
+
+    $('#edScale').addEventListener('input', (ev) => {
+      if (!state.draft || !state.draft.sticker) return;
+      state.draft.sticker.scale = Number(ev.target.value);
+      $('#edScaleLabel').textContent = `${Math.round(state.draft.sticker.scale * 100)}%`;
+      drawEditor();
+    });
+
+    $('#edFlip').addEventListener('click', () => {
+      if (!state.draft || !state.draft.sticker) return;
+      state.draft.sticker.flip = !state.draft.sticker.flip;
+      updateFlipUI();
+      drawEditor();
+    });
+
+    $$('.align-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (!state.draft) return;
+        state.draft.align = btn.dataset.align;
+        $$('.align-btn').forEach((b) => b.classList.toggle('is-active', b === btn));
+        drawEditor();
+      });
+    });
+
+    $('#bgSwatches').addEventListener('click', (ev) => {
+      const btn = ev.target.closest('[data-bg]');
+      if (!btn || !state.draft) return;
+      state.draft.bg = btn.dataset.bg;
+      $('#edBg').value = state.draft.bg;
+      drawEditor();
+    });
+
+    $('#edStickerGallery').addEventListener('click', (ev) => {
+      const btn = ev.target.closest('[data-sticker-index]');
+      if (!btn || !state.draft) return;
+      const sticker = state.stickers[Number(btn.dataset.stickerIndex)];
+      if (!sticker) return;
+      if (!state.draft.sticker) state.draft.sticker = { x: 862, y: 838, scale: 1, flip: false, src: null };
+      state.draft.sticker.src = sticker.src;
+      buildStickerGallery();
+      drawEditor();
+    });
+
+    async function saveEditor() {
+      if (!state.draft || state.editing < 0) return;
+      const btn = $('#saveEdit');
+      if (btn.disabled) return;
+      btn.disabled = true;
+      const original = btn.textContent;
+      btn.textContent = 'Menyimpan...';
+      const draft = state.draft;
+      const index = state.editing;
+      try {
+        await ensureFonts();
+        const canvas = getWorkCanvas();
+        await paintSlide(canvas.getContext('2d'), draft, { index, total: state.slides.length });
+        draft.png = canvas.toDataURL('image/png');
+        state.slides[index] = draft;
+        closeEditor();
+        renderGrid();
+        toast('Slide diperbarui.');
+      } catch (err) {
+        toast('Gagal menyimpan slide.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+
+    async function applyAppearanceToAll() {
+      if (!state.draft) return;
+      const btn = $('#applyAll');
+      if (btn.disabled) return;
+      btn.disabled = true;
+      const original = btn.innerHTML;
+      btn.textContent = 'Menerapkan...';
+      const draft = state.draft;
+      try {
+        state.slides.forEach((slide) => {
+          slide.bg = draft.bg;
+          slide.color = draft.color;
+          slide.size = draft.size;
+          slide.wrap = draft.wrap;
+          slide.align = draft.align;
+        });
+        await renderAll(state.slides);
+        hideProgress();
+        renderGrid();
+        toast('Warna & tipografi diterapkan ke semua slide.');
+      } catch (err) {
+        toast('Gagal menerapkan ke semua slide.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
+    }
+
+    $('#closeEditor').addEventListener('click', closeEditor);
+    $('#cancelEdit').addEventListener('click', closeEditor);
+    $('#editorBackdrop').addEventListener('click', closeEditor);
+    $('#saveEdit').addEventListener('click', saveEditor);
+    $('#applyAll').addEventListener('click', applyAppearanceToAll);
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && !$('#editorModal').classList.contains('hidden')) closeEditor();
+    });
+    function setGenerating(busy) {
+      state.generating = busy;
+      const btn = $('#generateBtn');
+      btn.disabled = busy;
+      $('#generateLabel').textContent = busy ? 'Merangkum & merender...' : 'Generate Slide';
+      $('#generateIcon').classList.toggle('animate-spin', busy);
+    }
+
+    async function generateSlides() {
+      if (state.generating) return;
+      const material = $('#material').value.trim();
+      if (material.length < 80) {
+        toast('Materi masih terlalu pendek. Tempel minimal beberapa kalimat.', 'warn');
+        $('#material').focus();
+        return;
+      }
+      const count = clamp(Number($('#slideCount').value) || 1, 1, MAX_SLIDES);
+      const style = $('input[name="style"]:checked').value;
+
+      setGenerating(true);
+      try {
+        showSkeletons(count);
+        $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setProgress(0, count, 'Merangkum materi...');
+        await nextFrame();
+        await new Promise((resolve) => setTimeout(resolve, 420));
+
+        const points = summarize(material, count, style);
+        state.slides = points.map((text, index) => makeSlide(text, index));
+        await renderAll(state.slides);
+        renderGrid();
+        hideProgress();
+        toast(`${state.slides.length} slide siap diedit & diunduh.`);
+      } catch (err) {
+        console.error(err);
+        hideProgress();
+        if (state.slides.some((slide) => slide.png)) renderGrid();
+        toast('Terjadi kesalahan saat merender slide.', 'error');
+      } finally {
+        setGenerating(false);
+      }
+    }
+
+    async function handleStickerUpload(files) {
+      const list = Array.from(files || []).filter((file) => /^image\/(png|webp|jpeg)$/i.test(file.type));
+      if (!list.length) {
+        toast('Gunakan file PNG transparan (atau WebP).', 'warn');
+        return;
+      }
+      for (const file of list) {
+        try {
+          const src = await readFileAsDataURL(file);
+          state.stickers.push({
+            id: `upload-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            name: file.name.replace(/\.[^.]+$/, ''),
+            src,
+            custom: true
+          });
+        } catch (err) {
+          toast(`Gagal membaca ${file.name}.`, 'error');
+        }
+      }
+      renderStickerStrip();
+      if (state.draft) buildStickerGallery();
+      toast(`${list.length} karakter ditambahkan ke galeri.`);
+      $('#stickerInput').value = '';
+    }
+
+    function downloadSlide(index) {
+      const slide = state.slides[index];
+      if (!slide || !slide.png) return;
+      downloadURL(slide.png, `slide-${pad2(index + 1)}.png`);
+    }
+
+    async function downloadZip() {
+      if (!state.slides.length || state.generating || $('#zipBtn').disabled) return;
+      const btn = $('#zipBtn');
+      const label = $('#zipLabel');
+      btn.disabled = true;
+      label.textContent = 'Menyiapkan ZIP...';
+      try {
+        if (typeof JSZip === 'undefined') throw new Error('Library JSZip tidak termuat');
+        const zip = new JSZip();
+        state.slides.forEach((slide, index) => {
+          if (!slide.png) return;
+          zip.file(`slide-${pad2(index + 1)}.png`, slide.png.split(',')[1], { base64: true });
+        });
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        downloadURL(url, 'slidecraft-slides.zip');
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        toast(`ZIP berisi ${state.slides.length} slide berhasil dibuat.`);
+      } catch (err) {
+        toast(`Gagal membuat ZIP: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        label.textContent = 'Download Semua (ZIP)';
+      }
+    }
+
+    $('#material').addEventListener('input', (ev) => {
+      $('#charCount').textContent = ev.target.value.length;
+    });
+
+    $('#sampleBtn').addEventListener('click', () => {
+      const field = $('#material');
+      field.value = SAMPLE_TEXT;
+      $('#charCount').textContent = field.value.length;
+      toast('Contoh materi dimuat. Tinggal atur jumlah slide.');
+      field.focus();
+    });
+
+    $('#slideCount').addEventListener('input', (ev) => {
+      $('#slideCountValue').textContent = ev.target.value;
+    });
+
+    $('#stickerInput').addEventListener('change', (ev) => {
+      handleStickerUpload(ev.target.files);
+    });
+
+    $('#generateBtn').addEventListener('click', generateSlides);
+    $('#zipBtn').addEventListener('click', downloadZip);
+
+    $('#grid').addEventListener('click', (ev) => {
+      const editBtn = ev.target.closest('[data-edit]');
+      if (editBtn) {
+        openEditor(Number(editBtn.dataset.edit));
+        return;
+      }
+      const dlBtn = ev.target.closest('[data-download]');
+      if (dlBtn) downloadSlide(Number(dlBtn.dataset.download));
+    });
+
+    function init() {
+      state.stickers = DEFAULT_MASCOTS.slice();
+      renderStickerStrip();
+      $('#charCount').textContent = $('#material').value.length;
+      $('#slideCountValue').textContent = $('#slideCount').value;
+      ensureFonts();
+    }
+
+    init();
+  </script>
+</body>
+</html>
