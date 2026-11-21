@@ -346,7 +346,7 @@
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
     const W = 1080;
     const H = 1080;
-    const BASE_STICKER_H = 380;
+    const BASE_STICKER_H = 320;
     const MAX_SLIDES = 35;
 
     const state = {
@@ -396,13 +396,35 @@
       });
     }
 
-    function downloadURL(url, filename) {
+    function dataURLToBlob(dataUrl) {
+      const parts = String(dataUrl).split(',');
+      const mime = (parts[0].match(/:(.*?);/) || [])[1] || 'image/png';
+      const binary = atob(parts[1] || '');
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      return new Blob([bytes], { type: mime });
+    }
+
+    async function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+
+    function downloadDataURL(dataUrl, filename) {
+      return downloadBlob(dataURLToBlob(dataUrl), filename);
+    }
+
+    async function writeBlobToDir(dir, blob, filename) {
+      const handle = await dir.getFileHandle(filename, { create: true });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
     }
 
     function renderStickerStrip() {
@@ -783,6 +805,67 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       return picked;
     }
 
+    function exampleScore(unit) {
+      const text = unit.text || '';
+      const count = wordsOf(text).length;
+      const hasCue = /\b(contoh|contohnya|misalnya|misal|bayangkan|umpama|umpamanya|yaitu|yakni|seperti)\b/i.test(text);
+      const hasNumber = /\d/.test(text);
+      let value = 0;
+      if (/\b(contoh|contohnya|misalnya|misal|bayangkan|umpama|umpamanya)\b/i.test(text)) value += 4;
+      else if (/\b(yaitu|yakni|seperti)\b/i.test(text)) value += 1.5;
+      if (hasNumber) value += 2;
+      if (unit.kind === 'clause') value += hasCue || hasNumber ? 1.5 : 0.5;
+      if (count >= 5 && count <= 22) value += 1;
+      return value;
+    }
+
+    function rankExampleUnits(units, skipIdx) {
+      return units
+        .filter((unit) => unit.idx !== skipIdx && unit.text && wordsOf(unit.text).length >= 4)
+        .map((unit) => ({ unit, value: exampleScore(unit) }))
+        .filter((item) => item.value >= 2.5)
+        .sort((a, b) => b.value - a.value || a.unit.order - b.unit.order)
+        .map((item) => item.unit);
+    }
+
+    function firstClause(text, minWords = 5, maxWords = 16) {
+      const parts = String(text).split(/,\s+/);
+      let out = parts[0] || '';
+      let i = 1;
+      while (wordsOf(out).length < minWords && i < parts.length) {
+        out += `, ${parts[i]}`;
+        i += 1;
+      }
+      return condense(out, maxWords);
+    }
+
+    function makeExampleText(unit, style, proper = new Set()) {
+      const raw = String(unit.text || '').replace(/\s+/g, ' ').trim();
+      let core = '';
+      const leading = raw.match(/^(?:contohnya|contoh|misalnya|misal|bayangkan|umpamanya|umpama)\s*[:,]?\s+(.+)$/i);
+      if (leading) core = leading[1];
+      if (!core) {
+        const appos = raw.match(/^(.*?)[,;:]?\s+(?:yaitu|yakni)\s+(.+)$/i);
+        if (appos) {
+          const head = appos[1]
+            .replace(/^(penelitian|studi|riset|para ahli|sebuah studi)\s+(menunjukkan|menyebutkan|mengatakan|menemukan)\s+(bahwa\s+)?/i, '')
+            .trim();
+          const headWords = wordsOf(head);
+          core = headWords.length >= 1 && headWords.length <= 4 ? `${head}, ${appos[2]}` : appos[2];
+        }
+      }
+      if (!core) core = raw;
+      core = firstClause(core).replace(/^(dan|tapi|tetapi|namun|jadi|karena)\s+/i, '');
+      let out = core;
+      if (style === 'santai') {
+        const first = (wordsOf(core)[0] || '').toLowerCase();
+        if (!proper.has(first)) out = lowerFirst(core);
+      } else {
+        out = capitalizeFirst(core);
+      }
+      return style === 'santai' ? `Contohnya: ${out}` : `Contoh: ${out}`;
+    }
+
     function recapSlides(units, style, skipIdx = -1) {
       const cues = style === 'santai'
         ? ['Ingat nih', 'Catat ya', 'Poin penting', 'Kunci', 'Fokus']
@@ -877,14 +960,78 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       }
 
       const proper = properNounSet(sentences);
+
+      if (bodyCount >= 2) {
+        const candidates = rankExampleUnits(units, conclusionSource.idx);
+        const pickedAt = new Map();
+        picked.forEach((unit, i) => {
+          const key = normalizeKey(unit.text);
+          if (key && !pickedAt.has(key)) pickedAt.set(key, i);
+        });
+
+        let targetUnit = null;
+        let targetAt = -1;
+        for (const candidate of candidates) {
+          const at = pickedAt.get(normalizeKey(candidate.text));
+          if (at !== undefined) {
+            targetUnit = picked[at];
+            targetAt = at;
+            break;
+          }
+        }
+
+        if (!targetUnit) {
+          const insertable = candidates.find((candidate) => !sentenceIdx.has(candidate.idx) && !clauseIdx.has(candidate.idx));
+          if (insertable) {
+            const counts = new Map();
+            picked.forEach((unit) => counts.set(unit.block, (counts.get(unit.block) || 0) + 1));
+            let weakestAt = -1;
+            let weakest = null;
+            picked.forEach((unit, i) => {
+              if (unit.kind !== 'recap' && blocks.length > 1 && (counts.get(unit.block) || 0) <= 1) return;
+              if (!weakest || unit.score < weakest.score) { weakest = unit; weakestAt = i; }
+            });
+            if (weakestAt >= 0) {
+              targetUnit = insertable;
+              targetAt = weakestAt;
+            }
+          }
+        }
+
+        if (!targetUnit) {
+          let best = null;
+          picked.forEach((unit, i) => {
+            if (unit.kind === 'recap' || unit.kind === 'example') return;
+            const value = exampleScore(unit);
+            if (!best || value > best.value) best = { at: i, unit, value };
+          });
+          if (best && best.value >= 2) { targetUnit = best.unit; targetAt = best.at; }
+        }
+
+        if (targetUnit) {
+          const exampleText = makeExampleText(targetUnit, style, proper);
+          const example = { ...targetUnit, text: exampleText, kind: 'example', tokens: tokenSet(targetUnit.text) };
+          if (!pickedAt.has(normalizeKey(targetUnit.text))) {
+            example.order = targetUnit.order + 0.55;
+            picked.splice(targetAt, 1, example);
+          } else {
+            picked[targetAt] = example;
+          }
+          used.add(normalizeKey(exampleText));
+        }
+      }
+
       const ordered = picked.sort((a, b) => a.order - b.order);
       const selectedUnits = ordered.slice(0, bodyCount);
       const bodies = selectedUnits
-        .map((unit) => (unit.kind === 'recap' ? unit.text : styleBody(unit.text, style, proper)));
+        .map((unit) => (unit.kind === 'recap' || unit.kind === 'example' ? unit.text : styleBody(unit.text, style, proper)));
 
       while (bodies.length < bodyCount && ordered.length) {
         const fallbackUnit = ordered[bodies.length % ordered.length];
-        bodies.push(fallbackUnit.kind === 'recap' ? fallbackUnit.text : styleBody(fallbackUnit.text, style, proper));
+        const text = fallbackUnit.kind === 'recap' || fallbackUnit.kind === 'example'
+          ? fallbackUnit.text
+          : styleBody(fallbackUnit.text, style, proper);
+        bodies.push(text);
       }
 
       const result = [hook, ...bodies, conclusion];
@@ -1006,14 +1153,13 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
           const naturalH = img.naturalHeight || img.height || 1;
           let h = BASE_STICKER_H * (sticker.scale || 1);
           let w = h * (naturalW / naturalH);
-          if (w > 720) {
-            const k = 720 / w;
-            w *= k;
-            h *= k;
-          }
+          const fit = Math.min(1, (W - 180) / w, (H - 180) / h);
+          w *= fit;
+          h *= fit;
+          const pad = 48;
+          const cx = clamp(sticker.x, w / 2 + pad, W - w / 2 - pad);
+          const cy = clamp(sticker.y, h / 2 + pad, H - h / 2 - pad);
           ctx.save();
-          const cx = clamp(sticker.x, w / 2, W - w / 2);
-          const cy = clamp(sticker.y, h / 2, H - h / 2);
           ctx.translate(cx, cy);
           if (sticker.flip) ctx.scale(-1, 1);
           ctx.drawImage(img, -w / 2, -h / 2, w, h);
@@ -1040,14 +1186,6 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
         ctx.fillText(line, ax, ty - totalH / 2 + lineHeight / 2 + i * lineHeight);
       });
       ctx.restore();
-
-      const barW = 96;
-      const barH = 12;
-      const barX = clamp(tx - barW / 2, 24, W - barW - 24);
-      const barY = clamp(ty - totalH / 2 - 36 - barH, 24, H - barH - 24);
-      roundRect(ctx, barX, barY, barW, barH, barH / 2);
-      ctx.fillStyle = '#10b981';
-      ctx.fill();
 
       const textBox = { x: tx - maxW / 2, y: ty - totalH / 2, w: maxW, h: totalH };
 
@@ -1428,7 +1566,9 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       if (!btn || !state.draft) return;
       const sticker = state.stickers[Number(btn.dataset.stickerIndex)];
       if (!sticker) return;
+      const hadSticker = !!(state.draft.sticker && state.draft.sticker.src);
       if (!state.draft.sticker) state.draft.sticker = { x: 862, y: 838, scale: 1, flip: false, src: null };
+      if (!hadSticker && state.draft.ty === 500) state.draft.ty = 410;
       state.draft.sticker.src = sticker.src;
       buildStickerGallery();
       drawEditor();
@@ -1602,26 +1742,49 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
     function downloadSlide(index) {
       const slide = state.slides[index];
       if (!slide || !slide.png) return;
-      downloadURL(slide.png, `slide-${pad2(index + 1)}.png`);
+      downloadDataURL(slide.png, `slide-${pad2(index + 1)}.png`);
     }
 
     let downloadingAll = false;
     async function downloadAll() {
       if (!state.slides.length || state.generating || downloadingAll || $('#downloadAllBtn').disabled) return;
+      const slides = state.slides.filter((slide) => slide && slide.png);
+      if (!slides.length) return;
+      const total = slides.length;
       const btn = $('#downloadAllBtn');
       const label = $('#downloadAllLabel');
-      const total = state.slides.length;
       downloadingAll = true;
       btn.disabled = true;
       try {
-        for (let i = 0; i < total; i += 1) {
-          const slide = state.slides[i];
-          if (!slide || !slide.png) continue;
-          label.textContent = `Mengunduh ${i + 1}/${total}...`;
-          downloadURL(slide.png, `slide-${pad2(i + 1)}.png`);
-          await new Promise((resolve) => setTimeout(resolve, 320));
+        let dir = null;
+        if (typeof window.showDirectoryPicker === 'function') {
+          try {
+            dir = await window.showDirectoryPicker({ mode: 'readwrite' });
+          } catch (err) {
+            if (err && err.name === 'AbortError') return;
+          }
         }
-        toast(`${total} PNG diunduh. Jika browser minta izin, pilih Izinkan.`);
+        if (dir) {
+          try {
+            for (let i = 0; i < total; i += 1) {
+              label.textContent = `Menyimpan ${i + 1}/${total}...`;
+              await writeBlobToDir(dir, dataURLToBlob(slides[i].png), `slide-${pad2(i + 1)}.png`);
+            }
+            toast(`${total} PNG tersimpan urut di folder: slide-01 sampai slide-${pad2(total)}.`);
+            return;
+          } catch (err) {
+            console.warn('Gagal menulis ke folder, beralih ke unduhan biasa.', err);
+          }
+        }
+        for (let i = 0; i < total; i += 1) {
+          label.textContent = `Mengunduh ${i + 1}/${total}...`;
+          await downloadDataURL(slides[i].png, `slide-${pad2(i + 1)}.png`);
+          await new Promise((resolve) => setTimeout(resolve, 450));
+        }
+        toast(`${total} PNG diunduh berurutan: slide-01 sampai slide-${pad2(total)}.`);
+      } catch (err) {
+        console.error(err);
+        toast('Gagal menyimpan semua slide. Coba lagi.', 'error');
       } finally {
         downloadingAll = false;
         btn.disabled = false;
