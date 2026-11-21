@@ -20,7 +20,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <style>
     :root { color-scheme: dark; }
     html, body { background: #09090b; }
@@ -82,7 +81,7 @@
       </a>
       <div class="hidden items-center gap-2 text-[11px] text-zinc-400 sm:flex">
         <span class="rounded-full border border-line bg-panel px-3 py-1">Canvas 1080&times;1080</span>
-        <span class="rounded-full border border-line bg-panel px-3 py-1">PNG + ZIP</span>
+        <span class="rounded-full border border-line bg-panel px-3 py-1">Download PNG langsung</span>
         <span class="rounded-full border border-brand/25 bg-brand/[0.07] px-3 py-1 text-brand">100% lokal</span>
       </div>
     </div>
@@ -94,7 +93,7 @@
         <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-brand"></span> Smart summarizer
       </div>
       <h1 class="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">Materi panjang jadi <span class="text-brand">slide</span><br class="hidden sm:block" /> siap posting.</h1>
-      <p class="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-zinc-400 sm:text-base">Tempel artikel, pilih jumlah slide, dan biarkan SlideCraft merangkum alurnya. Edit tiap slide langsung di canvas, lalu unduh semuanya sebagai ZIP.</p>
+      <p class="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-zinc-400 sm:text-base">Tempel artikel, pilih jumlah slide, dan biarkan SlideCraft merangkum alurnya. Edit tiap slide langsung di canvas, lalu unduh semuanya sebagai file PNG.</p>
     </section>
 
     <section class="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
@@ -165,13 +164,13 @@
             </span>
           </label>
           <div id="stickerStrip" class="mt-3 flex gap-2 overflow-x-auto pb-1"></div>
-          <p class="mt-2 text-[11px] leading-relaxed text-zinc-500">Tanpa upload? 5 maskot default dipakai otomatis, posisinya bergantian kiri&ndash;kanan.</p>
+          <p class="mt-2 text-[11px] leading-relaxed text-zinc-500">Belum upload? Slide tetap tampil bersih tanpa karakter. Kamu bisa menambahkannya kapan saja.</p>
         </div>
       </div>
     </section>
 
     <div class="mt-5 flex flex-col gap-3 rounded-3xl border border-line bg-panel/60 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-      <p class="text-[12px] leading-relaxed text-zinc-500">Render 1080&times;1080 px &middot; teks tajam &middot; karakter transparan &middot; ZIP siap posting</p>
+      <p class="text-[12px] leading-relaxed text-zinc-500">Render 1080&times;1080 px &middot; teks tajam &middot; karakter transparan &middot; PNG siap posting</p>
       <button id="generateBtn" type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-ink transition duration-200 hover:bg-emerald-400 hover:shadow-[0_0_45px_-10px_rgba(16,185,129,.85)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60">
         <svg id="generateIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
         <span id="generateLabel">Generate Slide</span>
@@ -187,9 +186,9 @@
             <span id="resultCount" class="rounded-full border border-line bg-panel px-2.5 py-0.5 text-[11px] text-zinc-400">Belum ada</span>
           </div>
         </div>
-        <button id="zipBtn" type="button" disabled class="inline-flex items-center justify-center gap-2 rounded-xl border border-brand/40 bg-brand/10 px-4 py-2.5 text-xs font-bold text-brand transition hover:bg-brand/20 hover:shadow-[0_0_30px_-12px_rgba(16,185,129,.8)] active:scale-95 disabled:cursor-not-allowed disabled:border-line disabled:bg-panel disabled:text-zinc-600">
+        <button id="downloadAllBtn" type="button" disabled title="Browser mungkin meminta izin unduh beberapa file" class="inline-flex items-center justify-center gap-2 rounded-xl border border-brand/40 bg-brand/10 px-4 py-2.5 text-xs font-bold text-brand transition hover:bg-brand/20 hover:shadow-[0_0_30px_-12px_rgba(16,185,129,.8)] active:scale-95 disabled:cursor-not-allowed disabled:border-line disabled:bg-panel disabled:text-zinc-600">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
-          <span id="zipLabel">Download Semua (ZIP)</span>
+          <span id="downloadAllLabel">Download Semua PNG</span>
         </button>
       </div>
 
@@ -319,7 +318,7 @@
                 <input id="edScale" type="range" min="0.4" max="2" step="0.05" class="range" />
               </div>
               <div id="edStickerGallery" class="grid grid-cols-6 gap-1.5"></div>
-              <p class="text-[10px] leading-relaxed text-zinc-600">Pilih gambar untuk mengganti karakter slide ini. Stiker transparan paling rapi.</p>
+              <p class="text-[10px] leading-relaxed text-zinc-600">Karakter hanya muncul setelah kamu upload PNG transparan. File dengan latar transparan paling rapi.</p>
             </div>
           </div>
         </div>
@@ -406,94 +405,18 @@
       link.remove();
     }
 
-    const MASCOT_PALETTES = [
-      { hair: '#0f766e', shirt: '#10b981', shirtDark: '#059669', skin: '#ffe6d5' },
-      { hair: '#1e40af', shirt: '#3b82f6', shirtDark: '#2563eb', skin: '#ffe6d5' },
-      { hair: '#5b21b6', shirt: '#8b5cf6', shirtDark: '#7c3aed', skin: '#ffdfc4' },
-      { hair: '#b45309', shirt: '#f59e0b', shirtDark: '#d97706', skin: '#ffe6d5' },
-      { hair: '#9f1239', shirt: '#f43f5e', shirtDark: '#e11d48', skin: '#ffdfc4' }
-    ];
-
-    function mascotSVG(index) {
-      const p = MASCOT_PALETTES[index % MASCOT_PALETTES.length];
-      const ink = '#0b1220';
-      const face = index % 5;
-
-      const eyes = face === 1
-        ? `<path d="M162 184l5 11 12 2-9 9 2 12-10-6-10 6 2-12-9-9 12-2z" fill="${ink}"/><path d="M238 184l5 11 12 2-9 9 2 12-10-6-10 6 2-12-9-9 12-2z" fill="${ink}"/>`
-        : face === 2
-          ? `<path d="M146 206q16-20 32 0" fill="none" stroke="${ink}" stroke-width="9"/><ellipse cx="238" cy="202" rx="15" ry="19" fill="${ink}"/><circle cx="243" cy="195" r="5" fill="#fff"/>`
-          : face === 3
-            ? `<circle cx="162" cy="202" r="9" fill="${ink}"/><circle cx="238" cy="202" r="9" fill="${ink}"/><path d="M236 166q14-9 27-1" fill="none" stroke="${ink}" stroke-width="6"/>`
-            : `<ellipse cx="162" cy="202" rx="15" ry="19" fill="${ink}"/><circle cx="167" cy="195" r="5" fill="#fff"/><ellipse cx="238" cy="202" rx="15" ry="19" fill="${ink}"/><circle cx="243" cy="195" r="5" fill="#fff"/>`;
-
-      const mouth = face === 1 || face === 4
-        ? `<ellipse cx="200" cy="242" rx="14" ry="17" fill="${ink}"/><ellipse cx="200" cy="250" rx="7" ry="5" fill="#fb7185" stroke="none"/>`
-        : face === 3
-          ? `<path d="M188 244h24" stroke-width="8"/>`
-          : `<path d="M182 238q18 18 36 0" fill="none" stroke-width="8"/>`;
-
-      const leftArm = face === 1
-        ? `<g transform="translate(120 340) rotate(32)"><rect x="-18" y="-8" width="36" height="92" rx="18" fill="${p.shirt}"/><circle cx="0" cy="-20" r="21" fill="${p.skin}"/></g>`
-        : `<rect x="110" y="336" width="36" height="96" rx="18" fill="${p.shirt}" transform="rotate(14 128 384)"/><circle cx="119" cy="436" r="20" fill="${p.skin}"/>`;
-
-      const rightArm = face === 3
-        ? `<rect x="254" y="336" width="36" height="96" rx="18" fill="${p.shirt}" transform="rotate(-14 272 384)"/><circle cx="281" cy="436" r="20" fill="${p.skin}"/>`
-        : face === 4
-          ? `<g transform="translate(288 356) rotate(-12)"><rect x="-22" y="-16" width="46" height="42" rx="19" fill="${p.skin}"/><rect x="1" y="-44" width="17" height="34" rx="8.5" fill="${p.skin}"/></g>`
-          : `<g transform="translate(280 338) rotate(-40)"><rect x="-18" y="-8" width="36" height="92" rx="18" fill="${p.shirt}"/><circle cx="0" cy="-20" r="21" fill="${p.skin}"/></g>`;
-
-      const thought = face === 3
-        ? `<g fill="#fff" stroke="${ink}" stroke-width="6"><circle cx="306" cy="128" r="7"/><circle cx="328" cy="101" r="11"/><circle cx="354" cy="66" r="17"/></g>`
-        : '';
-
-      const clipY = face === 3 ? 178 : 146;
-      const clipX = face === 3 ? 268 : 296;
-
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="480" viewBox="0 0 400 480">
-        <ellipse cx="200" cy="462" rx="120" ry="15" fill="#0b1220" opacity=".08"/>
-        <g stroke="${ink}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="138" y="420" width="48" height="38" rx="19" fill="${p.shirtDark}"/>
-          <rect x="214" y="420" width="48" height="38" rx="19" fill="${p.shirtDark}"/>
-          <path d="M130 338c0-32 32-52 70-52s70 20 70 52l8 70c3 24-14 36-32 36H154c-18 0-35-12-32-36z" fill="${p.shirt}"/>
-          <path d="M176 292q24 20 48 0" fill="none" stroke-width="7"/>
-          ${leftArm}
-          ${rightArm}
-          <circle cx="88" cy="202" r="20" fill="${p.skin}"/>
-          <circle cx="312" cy="202" r="20" fill="${p.skin}"/>
-          <circle cx="200" cy="194" r="106" fill="${p.skin}"/>
-          <path d="M96 196c0-64 44-110 104-110s104 46 104 110c-16-34-40-48-58-50-24 20-74 26-108 2-18 12-30 26-42 48z" fill="${p.hair}"/>
-          <path d="M100 184c-10 32-8 64 4 88" fill="none" stroke="${p.hair}" stroke-width="20"/>
-          <path d="M300 184c10 32 8 64-4 88" fill="none" stroke="${p.hair}" stroke-width="20"/>
-          <path d="M202 80c2-26 22-38 42-32-16 6-22 18-24 32" fill="${p.hair}" stroke-width="6"/>
-          <circle cx="${clipX}" cy="${clipY}" r="13" fill="${p.shirt}" stroke-width="6"/>
-          <ellipse cx="146" cy="232" rx="17" ry="9" fill="#fb7185" opacity=".45" stroke="none"/>
-          <ellipse cx="254" cy="232" rx="17" ry="9" fill="#fb7185" opacity=".45" stroke="none"/>
-          ${eyes}
-          ${mouth}
-          ${thought}
-        </g>
-      </svg>`;
-
-      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-    }
-
-    const DEFAULT_MASCOTS = [
-      { id: 'mascot-0', name: 'Halo', src: mascotSVG(0), custom: false },
-      { id: 'mascot-1', name: 'Semangat', src: mascotSVG(1), custom: false },
-      { id: 'mascot-2', name: 'Wink', src: mascotSVG(2), custom: false },
-      { id: 'mascot-3', name: 'Mikir', src: mascotSVG(3), custom: false },
-      { id: 'mascot-4', name: 'Jempol', src: mascotSVG(4), custom: false }
-    ];
-
     function renderStickerStrip() {
       const strip = $('#stickerStrip');
+      if (!state.stickers.length) {
+        strip.innerHTML = '<span class="py-2 text-[11px] leading-relaxed text-zinc-600">Belum ada karakter. Slide akan tampil bersih tanpa gambar.</span>';
+        return;
+      }
       strip.innerHTML = state.stickers.map((s) => `
         <div class="relative shrink-0" title="${escapeHTML(s.name)}">
-          <div class="h-14 w-14 overflow-hidden rounded-xl border ${s.custom ? 'border-brand/50' : 'border-line'} bg-white/95">
+          <div class="h-14 w-14 overflow-hidden rounded-xl border border-brand/50 bg-white/95">
             <img src="${s.src}" alt="${escapeHTML(s.name)}" class="h-full w-full object-contain p-0.5" />
           </div>
-          ${s.custom ? '<span class="absolute -right-1 -top-1 rounded-full bg-brand px-1 text-[8px] font-bold text-ink">NEW</span>' : ''}
+          <span class="absolute -right-1 -top-1 rounded-full bg-brand px-1 text-[8px] font-bold text-ink">NEW</span>
         </div>`).join('');
     }
 
@@ -504,7 +427,8 @@ Selain itu, ada konsep spaced repetition. Materi yang sama diulang pada interval
 Active recall juga penting. Daripada membaca ulang catatan, coba tutup buku dan jelaskan materinya dengan kata-kata sendiri. Teknik Feynman menyarankan kita menjelaskan konsep ke orang lain atau ke anak kecil. Jika ada bagian yang tersendat, di situlah celah pemahaman kita.
 
 Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelum ujian karena otak butuh waktu memindahkan informasi dari memori jangka pendek ke jangka panjang. Terakhir, atur lingkungan belajar: meja rapi, notifikasi mati, dan satu tujuan jelas per sesi. Konsistensi 30 menit setiap hari lebih efektif daripada 8 jam sekali seminggu.`;
-    const STOPWORDS = new Set(('yang dan di ke dari untuk dengan pada dalam adalah itu ini akan juga atau karena agar bisa dapat lebih sangat para kita kamu saya aku mereka dia tidak bukan sudah telah masih oleh sebagai saat ketika jika maka sehingga namun tetapi tapi serta antara secara hanya saja pun per tentang bagi tanpa hingga sampai setelah sebelum selama meskipun walaupun bahkan justru perlu harus ingin membuat jadi menjadi memiliki punya banyak sedikit semua setiap beberapa suatu sebuah tersebut yaitu misalnya contohnya biasanya kemudian lalu sekarang nanti juga merupakan sedang belum jangan mari ayo ada the of to in and is are for on with as by at or be that this it not you we they he she from will can was were has have had but if than then so such into over under about more most other some any each').split(/\s+/).filter(Boolean));
+    const STOPWORDS = new Set(('yang dan di ke dari untuk dengan pada dalam adalah itu ini akan juga atau karena agar bisa dapat lebih sangat para kita kamu saya aku mereka dia tidak bukan sudah telah masih oleh sebagai saat ketika jika maka sehingga namun tetapi tapi serta antara secara hanya saja pun per tentang bagi tanpa hingga sampai setelah sebelum selama meskipun walaupun bahkan justru perlu harus ingin membuat jadi menjadi memiliki punya banyak sedikit semua setiap beberapa suatu sebuah tersebut yaitu misalnya contohnya biasanya kemudian lalu sekarang nanti merupakan sedang belum jangan mari ayo ada the of to in and is are for on with as by at or be that this it not you we they he she from will can was were has have had but if than then so such into over under about more most other some any each lah kah nya sih dong deh kok nih tuh').split(/\s+/).filter(Boolean));
+    const TOPIC_GENERIC = new Set('menit jam hari minggu bulan tahun sesi kali orang bagian hal cara contoh penelitian menunjukkan halaman angka waktu proses biasanya pertama kedua terakhir penting banyak sedikit lebih sangat paling lama baru kecil besar tinggi rendah harus perlu ingin bisa dapat juga akan sudah telah masih saat ketika setelah sebelum selama tanpa bagi oleh dengan untuk dari pada dalam adalah itu ini yang dan atau karena agar duduk soal'.split(/\s+/));
 
     function wordsOf(text) {
       return String(text).match(/[\p{L}\p{N}][\p{L}\p{N}'’\-]*/gu) || [];
@@ -530,171 +454,442 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       return String(text).replace(/[.;:,]+$/g, '').trim();
     }
 
-    function condense(text, max = 24) {
-      const clean = tidy(String(text)
+    function tokenizeWords(text) {
+      return String(text).match(/[\p{L}\p{N}][\p{L}\p{N}'’\-]*/gu) || [];
+    }
+
+    function cleanText(text) {
+      return tidy(String(text)
         .replace(/\[[^\]]*\]/g, ' ')
         .replace(/https?:\/\/\S+/g, ' ')
         .replace(/^[\s•*\-–—\d.)]+/, ''));
-      const words = clean.split(' ').filter(Boolean);
-      if (words.length <= 25) return stripTrailingPeriod(clean);
-      const limit = clamp(max, 8, 25);
-      let slice = words.slice(0, limit);
-      for (let i = slice.length - 1; i >= Math.floor(limit * 0.6); i -= 1) {
-        if (/[.!?]$/.test(slice[i - 1] || '') || /[,;:]$/.test(slice[i - 1] || '')) {
-          slice = slice.slice(0, i);
-          break;
-        }
-      }
-      return stripTrailingPeriod(slice.join(' '));
     }
 
-    function splitSentences(raw) {
+    function contentWords(text) {
+      return tokenizeWords(String(text).toLowerCase())
+        .map((word) => word.replace(/[’']s$/, ''))
+        .filter((word) => word.length >= 3 && !STOPWORDS.has(word) && !/^\d+$/.test(word));
+    }
+
+    function tokenSet(text) {
+      return new Set(contentWords(text));
+    }
+
+    function normalizeKey(text) {
+      return String(text).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    }
+
+    function jaccard(a, b) {
+      if (!a.size || !b.size) return 0;
+      let overlap = 0;
+      a.forEach((word) => { if (b.has(word)) overlap += 1; });
+      return overlap / (a.size + b.size - overlap);
+    }
+
+    function condense(text, max = 25) {
+      const clean = cleanText(text);
+      const limit = clamp(max, 8, 25);
+      const words = clean.split(/\s+/).filter(Boolean);
+      if (words.length <= limit) return stripTrailingPeriod(clean);
+      const clauses = clean.split(/(?<=[,;:])\s+/).map(tidy).filter(Boolean);
+      let out = '';
+      for (const clause of clauses) {
+        const candidate = out ? `${out}, ${clause}` : clause;
+        if (wordsOf(candidate).length > limit) break;
+        out = candidate;
+      }
+      if (wordsOf(out).length >= 8) return stripTrailingPeriod(out);
+      let cut = words.slice(0, limit).join(' ');
+      const comma = cut.lastIndexOf(',');
+      if (comma > cut.length * 0.5) cut = cut.slice(0, comma);
+      return stripTrailingPeriod(cut).replace(/\s+(dan|atau|serta|karena|dengan|yang|untuk|dari|di|ke|pada|dalam|saat|ketika|supaya|agar)$/i, '');
+    }
+
+    function splitSentenceRecords(raw) {
       const blocks = String(raw).replace(/\r/g, '').split(/\n+/);
       const out = [];
-      for (const block of blocks) {
+      blocks.forEach((block, blockIndex) => {
         const cleaned = block
           .replace(/^\s*[-•*–—]+\s*/, '')
           .replace(/^\s*\d+[.)]\s*/, '')
           .trim();
-        if (!cleaned) continue;
+        if (!cleaned) return;
         const parts = cleaned.split(/(?<=[.!?])\s+/).flatMap((p) => p.split(/\s*;\s+/));
         for (const part of parts) {
           const sentence = tidy(part);
-          if (wordsOf(sentence).length >= 3) out.push(sentence);
+          if (wordsOf(sentence).length >= 3) out.push({ text: sentence, block: blockIndex });
         }
-      }
+      });
       if (!out.length) {
-        return tidy(raw).split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+        return tidy(raw)
+          .split(/(?<=[.!?])\s+/)
+          .map((text) => ({ text: tidy(text), block: 0 }))
+          .filter((item) => item.text);
       }
       return out;
     }
 
-    function keywordFreq(sentences) {
-      const freq = new Map();
-      for (const sentence of sentences) {
-        for (const rawWord of wordsOf(sentence.toLowerCase())) {
-          const word = rawWord.replace(/[’']s$/, '');
-          if (word.length < 4 || STOPWORDS.has(word) || /^\d+$/.test(word)) continue;
-          freq.set(word, (freq.get(word) || 0) + 1);
-        }
-      }
-      return freq;
+    function splitSentences(raw) {
+      return splitSentenceRecords(raw).map((item) => item.text);
     }
 
-    function scoreSentence(sentence, freq) {
-      const content = wordsOf(sentence.toLowerCase()).filter((w) => !STOPWORDS.has(w));
-      let score = 0;
-      for (const word of content) score += (freq.get(word) || 0) * (word.length > 7 ? 1.35 : 1);
-      score /= Math.sqrt(Math.max(content.length, 1));
-      if (/\d/.test(sentence)) score += 2.2;
-      if (sentence.length > 220) score -= (sentence.length - 220) / 90;
-      return score;
-    }
-
-    const TOPIC_SKIP = new Set('menit jam hari minggu bulan tahun sesi kali orang bagian hal cara contoh penelitian menunjukkan halaman angka waktu proses biasanya pertama kedua terakhir penting banyak sedikit lebih sangat'.split(/\s+/));
-
-    function makeTopic(freq) {
-      const candidates = [...freq.entries()]
-        .filter(([word]) => word.length >= 4 && !TOPIC_SKIP.has(word))
-        .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length);
-      return candidates.length ? candidates[0][0] : '';
-    }
-
-    function makeHook(topic, style) {
-      const t = lowerFirst(topic || 'materi ini');
-      return style === 'santai'
-        ? `Kenapa ${t} itu penting banget buat kamu?`
-        : `Pahami ${t} dalam satu menit.`;
-    }
-
-    function makeConclusion(core, style, topic) {
-      const c = lowerFirst(stripTrailingPeriod(core) || topic || 'materi ini');
-      return style === 'santai' ? `Intinya: ${c}.` : `Kesimpulan: ${c}.`;
-    }
-
-    const CONNECTORS = ['Jadi gini,', 'Nah,', 'Simpelnya,', 'Coba bayangin,', 'Intinya,', 'Faktanya,'];
-
-    function prepBody(sentence, style, index) {
-      const core = capitalizeFirst(condense(sentence, 21));
-      if (style === 'santai') {
-        const opener = CONNECTORS[(index * 5 + 1) % CONNECTORS.length];
-        const joined = `${opener} ${lowerFirst(core)}`;
-        if (wordsOf(joined).length <= 25) return joined;
-      }
-      return core;
-    }
-
-    function expandUnits(units, target) {
-      const out = units.slice();
-      let guard = 0;
-      while (out.length < target && guard < 200) {
-        guard += 1;
-        let bestIdx = 0;
-        let bestLen = 0;
-        out.forEach((unit, i) => {
-          const len = wordsOf(unit).length;
-          if (len > bestLen) { bestLen = len; bestIdx = i; }
+    function extractTopic(sentences) {
+      const uni = new Map();
+      const bi = new Map();
+      const shown = new Map();
+      sentences.forEach((sentence) => {
+        const tokens = tokenizeWords(sentence);
+        const lower = tokens.map((token) => token.toLowerCase().replace(/[’']s$/, ''));
+        lower.forEach((word, i) => {
+          if (word.length >= 4 && !STOPWORDS.has(word) && !/^\d+$/.test(word)) {
+            uni.set(word, (uni.get(word) || 0) + 1);
+          }
+          const next = lower[i + 1];
+          if (!next || word.length < 3 || next.length < 3) return;
+          if (STOPWORDS.has(word) || STOPWORDS.has(next)) return;
+          if (TOPIC_GENERIC.has(word) || TOPIC_GENERIC.has(next)) return;
+          if (/^\d+$/.test(word) || /^\d+$/.test(next)) return;
+          const phrase = `${word} ${next}`;
+          bi.set(phrase, (bi.get(phrase) || 0) + 1);
+          if (!shown.has(phrase)) {
+            const a = tokens[i];
+            const b = tokens[i + 1];
+            shown.set(phrase, /^[A-Z]/.test(a) ? `${a} ${b}` : phrase);
+          }
         });
-        if (bestLen < 12) break;
-        const words = out[bestIdx].split(' ');
-        const half = Math.ceil(words.length / 2);
-        out.splice(bestIdx, 1, words.slice(0, half).join(' '), words.slice(half).join(' '));
-      }
-      return out;
+      });
+      const first = (sentences[0] || '').toLowerCase();
+      const bestPhrase = [...bi.entries()]
+        .map(([phrase, count]) => ({
+          phrase,
+          count,
+          score: count * 2.2 + (count > 1 ? 1.1 : 0) + (first.includes(phrase) ? 2.6 : 0)
+        }))
+        .sort((a, b) => b.score - a.score || b.count - a.count)[0];
+      if (bestPhrase && bestPhrase.score >= 3.2) return shown.get(bestPhrase.phrase) || bestPhrase.phrase;
+      const bestWord = [...uni.entries()]
+        .filter(([word]) => !TOPIC_GENERIC.has(word))
+        .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)[0];
+      return bestWord ? bestWord[0] : '';
     }
 
-    function fillerLine(topic, freq, index) {
-      const keywords = [...freq.keys()].slice(0, 12);
-      if (!keywords.length) return `Poin ${index + 1}: perhatikan bagian penting dari ${topic}.`;
-      const a = keywords[index % keywords.length];
-      const b = keywords[(index * 3 + 1) % keywords.length];
-      return a === b
-        ? `Perdalam pemahaman soal ${a} supaya ${topic} lebih mudah dipakai.`
-        : `Hubungkan ${a} dengan ${b} supaya ${topic} lebih mudah dipahami.`;
+    function sentenceScores(sentences) {
+      const freq = new Map();
+      sentences.forEach((sentence) => {
+        contentWords(sentence).forEach((word) => freq.set(word, (freq.get(word) || 0) + 1));
+      });
+      const total = Math.max(sentences.length, 1);
+      return sentences.map((text, idx) => {
+        const unique = new Set(contentWords(text));
+        let score = 0;
+        unique.forEach((word) => { score += (freq.get(word) || 0) * (word.length >= 7 ? 1.25 : 1); });
+        score /= Math.sqrt(Math.max(unique.size, 1));
+        if (idx === 0) score *= 1.12;
+        if (idx >= total * 0.7) score *= 1.06;
+        if (/\d/.test(text)) score += 1.3;
+        if (/\b(adalah|yaitu|merupakan|artinya|maksudnya)\b/i.test(text)) score += 1.7;
+        if (/\b(bukan|jangan|tanpa)\b/i.test(text)) score += 0.6;
+        const weight = wordsOf(text).length;
+        if (weight < 6) score *= 0.75;
+        if (weight > 38) score *= 0.82;
+        return { text, idx, score };
+      });
+    }
+
+    function pickConclusion(scored) {
+      const cues = /\b(jadi|intinya|kesimpulan|simpul|terakhir|akhirnya|singkatnya|kunci|konsisten|konsistensi|hasilnya)\b/i;
+      const tail = scored.filter((item) => item.idx >= Math.floor(scored.length * 0.55));
+      const pool = tail.length ? tail : scored;
+      return pool
+        .map((item) => ({ ...item, final: item.score + (cues.test(item.text) ? 2.4 : 0) }))
+        .sort((a, b) => b.final - a.final)[0] || scored[0];
+    }
+
+    function makeHook(topic, style, total) {
+      const t = lowerFirst(topic || '');
+      if (!t) {
+        return style === 'santai'
+          ? 'Oke, kita bahas inti materinya satu per satu.'
+          : `Inti materi dalam ${total} poin.`;
+      }
+      return style === 'santai'
+        ? `Jadi, apa sih ${t} itu?`
+        : `Pahami ${t} dalam ${total} poin singkat.`;
+    }
+
+    function makeConclusion(unit, style) {
+      const core = lowerFirst(
+        condense(unit.text, 23).replace(/^(jadi|intinya|kesimpulannya|singkatnya|terakhir|akhirnya|hasilnya)[,:]?\s+/i, '')
+      );
+      return style === 'santai' ? `Intinya, ${core}.` : `Kesimpulan: ${core}.`;
+    }
+
+    function properNounSet(sentences) {
+      const set = new Set();
+      sentences.forEach((sentence) => {
+        tokenizeWords(sentence).forEach((token, i) => {
+          if (i > 0 && /^[A-Z][a-z]/.test(token) && !/^[A-Z]{2,}$/.test(token)) set.add(token.toLowerCase());
+        });
+      });
+      return set;
+    }
+
+    function styleBody(text, style, proper) {
+      const core = condense(text, 25);
+      if (style !== 'santai') return capitalizeFirst(core);
+      const first = (core.match(/^[\p{L}\p{N}'’-]+/u) || [''])[0];
+      if (/^[A-Z]{2,}$/.test(first) || proper.has(first.toLowerCase())) return core;
+      return lowerFirst(core);
+    }
+
+    function clauseUnits(sentence) {
+      const clean = cleanText(sentence);
+      const full = stripTrailingPeriod(clean);
+      if (wordsOf(full).length < 12) return [];
+      const parts = clean
+        .split(/(?<=[,;:])\s+(?!(?:yaitu|yakni|misalnya|contohnya|seperti)\b)/i)
+        .flatMap((part) => part.split(/\s+(?=(?:karena|sebab|tetapi|tapi|namun|sedangkan|sehingga|supaya|agar|jika|kalau|ketika|saat|sambil|padahal)\b)/i))
+        .map((part) => tidy(part).replace(/[,;:]+$/, '').replace(/^(yaitu|yakni|misalnya|contohnya|seperti|dan)\s+/i, ''))
+        .filter(Boolean);
+      const merged = [];
+      let buffer = '';
+      for (const part of parts) {
+        const candidate = buffer ? `${buffer}, ${part}` : part;
+        if (wordsOf(candidate).length < 5) {
+          buffer = candidate;
+          continue;
+        }
+        merged.push(candidate);
+        buffer = '';
+      }
+      if (buffer) {
+        if (merged.length) merged[merged.length - 1] = `${merged[merged.length - 1]}, ${buffer}`;
+        else merged.push(buffer);
+      }
+      const out = [];
+      const seen = new Set();
+      const fullKey = normalizeKey(full);
+      for (const part of merged) {
+        const text = stripTrailingPeriod(part);
+        const count = wordsOf(text).length;
+        const key = normalizeKey(text);
+        if (count < 5 || count > 25 || !key || key === fullKey || seen.has(key)) continue;
+        seen.add(key);
+        out.push(text);
+      }
+      return out.length >= 2 ? out : [];
+    }
+
+    function buildUnits(sentences, scored) {
+      const units = [];
+      const seen = new Set();
+      scored.forEach(({ text, idx, block, score }) => {
+        const full = condense(text, 25);
+        const fullCount = wordsOf(full).length;
+        if (fullCount >= 4) {
+          const key = normalizeKey(full);
+          if (key && !seen.has(key)) {
+            seen.add(key);
+            units.push({ text: full, idx, block, order: idx, score, tokens: tokenSet(full), kind: 'sentence' });
+          }
+        }
+        clauseUnits(text).forEach((clause, ci, all) => {
+          const unit = stripTrailingPeriod(clause);
+          const count = wordsOf(unit).length;
+          if (count < 5 || count > 25) return;
+          const key = normalizeKey(unit);
+          if (!key || seen.has(key)) return;
+          const tokens = tokenSet(unit);
+          if (tokens.size < 2) return;
+          seen.add(key);
+          units.push({
+            text: unit,
+            idx,
+            block,
+            order: idx + (ci + 1) / (all.length + 2),
+            score: score * (0.62 + Math.min(count, 18) / 60),
+            tokens,
+            kind: 'clause'
+          });
+        });
+      });
+      return units;
+    }
+
+    function selectUnits(units, count, options = {}) {
+      const exclude = options.exclude || new Set();
+      const skipIdx = Number.isInteger(options.skipIdx) ? options.skipIdx : -1;
+      const demandHigh = !!options.demandHigh;
+      const maxPerSentence = demandHigh ? 3 : 2;
+      const splitIdx = new Set(units.filter((unit) => unit.kind === 'clause').map((unit) => unit.idx));
+      const picked = [];
+      const pool = units.filter((unit) => !exclude.has(normalizeKey(unit.text)) && unit.idx !== skipIdx);
+      while (picked.length < count && pool.length) {
+        const sentenceIdx = new Set(picked.filter((unit) => unit.kind === 'sentence').map((unit) => unit.idx));
+        const touchedIdx = new Set(picked.map((unit) => unit.idx));
+        const pickedKeys = new Set(picked.map((unit) => normalizeKey(unit.text)));
+        let bestAt = -1;
+        let bestValue = -Infinity;
+        for (let i = 0; i < pool.length; i += 1) {
+          const unit = pool[i];
+          if (pickedKeys.has(normalizeKey(unit.text))) continue;
+          if (demandHigh && unit.kind === 'sentence' && splitIdx.has(unit.idx)) continue;
+          if (unit.kind === 'sentence' && touchedIdx.has(unit.idx)) continue;
+          if (unit.kind === 'clause' && sentenceIdx.has(unit.idx)) continue;
+          if (picked.filter((item) => item.idx === unit.idx).length >= maxPerSentence) continue;
+          let similarity = 0;
+          for (const item of picked) similarity = Math.max(similarity, jaccard(unit.tokens, item.tokens));
+          let value = unit.score - 0.52 * similarity;
+          if (touchedIdx.has(unit.idx)) value -= 0.2;
+          if (unit.kind === 'clause') value += demandHigh ? 0.24 : -0.06;
+          if (unit.kind === 'sentence' && demandHigh) value -= 0.24;
+          if (value > bestValue) { bestValue = value; bestAt = i; }
+        }
+        if (bestAt < 0) break;
+        picked.push(pool.splice(bestAt, 1)[0]);
+      }
+      return picked;
+    }
+
+    function enforceBlockCoverage(picked, units, blocks, limit) {
+      if (blocks.length < 2 || blocks.length > limit || !picked.length) return picked;
+      const bestByBlock = new Map();
+      units.forEach((unit) => {
+        if (unit.kind !== 'sentence') return;
+        const current = bestByBlock.get(unit.block);
+        if (!current || unit.score > current.score) bestByBlock.set(unit.block, unit);
+      });
+      const used = new Set(picked.map((unit) => normalizeKey(unit.text)));
+      blocks.forEach((block) => {
+        if (picked.some((unit) => unit.block === block)) return;
+        const candidate = bestByBlock.get(block);
+        if (!candidate || used.has(normalizeKey(candidate.text))) return;
+        const counts = new Map();
+        picked.forEach((unit) => counts.set(unit.block, (counts.get(unit.block) || 0) + 1));
+        let weakestAt = -1;
+        let weakest = null;
+        picked.forEach((unit, i) => {
+          if ((counts.get(unit.block) || 0) > 1 && (!weakest || unit.score < weakest.score)) {
+            weakest = unit;
+            weakestAt = i;
+          }
+        });
+        if (weakestAt >= 0 && candidate.score >= weakest.score * 0.55) {
+          used.delete(normalizeKey(weakest.text));
+          used.add(normalizeKey(candidate.text));
+          picked.splice(weakestAt, 1, candidate);
+        }
+      });
+      return picked;
+    }
+
+    function recapSlides(units, style, skipIdx = -1) {
+      const cues = style === 'santai'
+        ? ['Ingat nih', 'Catat ya', 'Poin penting', 'Kunci', 'Fokus']
+        : ['Poin penting', 'Catatan', 'Kunci', 'Ringkasan', 'Perhatikan'];
+      const rank = (unit) => (unit.kind === 'sentence' ? 0 : 1);
+      const pool = [...units]
+        .filter((unit) => unit.text && unit.idx !== skipIdx)
+        .sort((a, b) => rank(a) - rank(b) || a.order - b.order);
+      if (!pool.length) return [];
+      const out = [];
+      const seen = new Set();
+      let guard = 0;
+      while (out.length < MAX_SLIDES && guard < pool.length * cues.length * 2) {
+        const base = pool[guard % pool.length];
+        const cue = cues[out.length % cues.length];
+        const core = condense(base.text, 20).replace(/:\s*/g, ', ');
+        const styled = style === 'santai' ? lowerFirst(core) : capitalizeFirst(core);
+        const text = `${cue}: ${styled}`;
+        const key = normalizeKey(text);
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          out.push({
+            text,
+            idx: base.idx,
+            block: base.block,
+            order: 900 + out.length,
+            score: base.score * 0.5,
+            tokens: tokenSet(text),
+            kind: 'recap'
+          });
+        }
+        guard += 1;
+      }
+      return out;
     }
 
     function summarize(raw, count, style) {
       const n = clamp(Number(count) || 1, 1, MAX_SLIDES);
-      const sentences = splitSentences(raw).filter((s) => wordsOf(s).length >= 3);
+      const records = splitSentenceRecords(raw);
+      const sentences = records.map((item) => item.text);
 
       if (!sentences.length) {
-        const fallback = capitalizeFirst(condense(raw, 24)) || 'Materi belum cukup untuk dirangkum.';
-        return Array.from({ length: n }, (_, i) => (i === 0 ? fallback : `Poin ${i + 1}: ${fallback}`));
+        const words = wordsOf(raw);
+        if (!words.length) return Array.from({ length: n }, () => 'Materi belum cukup untuk dirangkum.');
+        const chunks = [];
+        for (let i = 0; i < words.length; i += 20) chunks.push(words.slice(i, i + 20).join(' '));
+        return Array.from({ length: n }, (_, i) => capitalizeFirst(chunks[i % chunks.length]));
       }
 
-      const freq = keywordFreq(sentences);
-      const topic = makeTopic(freq) || 'materi ini';
-      const scored = sentences.map((text, idx) => ({
-        text,
-        idx,
-        score: scoreSentence(text, freq) + (idx === 0 ? 1.5 : 0)
-      }));
-      const best = [...scored].sort((a, b) => b.score - a.score)[0];
-      const core = capitalizeFirst(condense(best.text, 20));
+      const blocks = records.map((item) => item.block);
+      const topic = extractTopic(sentences);
+      const scored = sentenceScores(sentences).map((item, i) => ({ ...item, block: records[i].block }));
+      const top = [...scored].sort((a, b) => b.score - a.score)[0];
+      const conclusionSource = pickConclusion(scored);
 
-      if (n === 1) return [core];
+      if (n === 1) return [capitalizeFirst(condense(top.text, 24))];
 
-      const hook = makeHook(topic, style);
-      const conclusion = makeConclusion(core, style, topic);
+      const hook = makeHook(topic, style, n);
+      const conclusion = makeConclusion(conclusionSource, style);
       if (n === 2) return [hook, conclusion];
 
       const bodyCount = n - 2;
-      let units = sentences.slice();
-      if (units.length < bodyCount) units = expandUnits(units, bodyCount);
+      const demandHigh = bodyCount > scored.length * 0.75;
+      const units = buildUnits(sentences, scored);
+      const exclusion = new Set([normalizeKey(condense(conclusionSource.text, 23))]);
+      let picked = selectUnits(units, bodyCount, { exclude: exclusion, skipIdx: conclusionSource.idx, demandHigh });
+      picked = enforceBlockCoverage(picked, units, [...new Set(blocks)], bodyCount);
 
-      const ranked = units
-        .map((text, idx) => ({ text, idx, score: scoreSentence(text, freq) + (idx === 0 ? 1.2 : 0) }))
-        .filter((unit) => unit.text !== best.text)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, bodyCount)
-        .sort((a, b) => a.idx - b.idx);
-
-      while (ranked.length < bodyCount) {
-        ranked.push({ text: fillerLine(topic, freq, ranked.length), idx: 999 + ranked.length });
+      const used = new Set([...picked.map((unit) => normalizeKey(unit.text)), normalizeKey(condense(conclusionSource.text, 23))]);
+      const sentenceIdx = new Set(picked.filter((unit) => unit.kind === 'sentence').map((unit) => unit.idx));
+      const clauseIdx = new Set(picked.filter((unit) => unit.kind === 'clause').map((unit) => unit.idx));
+      const orderedPool = [...units].sort((a, b) => a.order - b.order);
+      for (const unit of orderedPool) {
+        if (picked.length >= bodyCount) break;
+        const key = normalizeKey(unit.text);
+        if (!key || used.has(key)) continue;
+        if (unit.kind === 'clause' && sentenceIdx.has(unit.idx)) continue;
+        if (unit.kind === 'sentence' && clauseIdx.has(unit.idx)) continue;
+        used.add(key);
+        if (unit.kind === 'sentence') sentenceIdx.add(unit.idx); else clauseIdx.add(unit.idx);
+        picked.push(unit);
       }
 
-      const bodies = ranked.map((unit, i) => prepBody(unit.text, style, i));
-      return [hook, ...bodies, conclusion];
+      if (picked.length < bodyCount) {
+        for (const unit of recapSlides(units, style, conclusionSource.idx)) {
+          if (picked.length >= bodyCount) break;
+          const key = normalizeKey(unit.text);
+          if (!key || used.has(key)) continue;
+          used.add(key);
+          picked.push(unit);
+        }
+      }
+
+      const proper = properNounSet(sentences);
+      const ordered = picked.sort((a, b) => a.order - b.order);
+      const selectedUnits = ordered.slice(0, bodyCount);
+      const bodies = selectedUnits
+        .map((unit) => (unit.kind === 'recap' ? unit.text : styleBody(unit.text, style, proper)));
+
+      while (bodies.length < bodyCount && ordered.length) {
+        const fallbackUnit = ordered[bodies.length % ordered.length];
+        bodies.push(fallbackUnit.kind === 'recap' ? fallbackUnit.text : styleBody(fallbackUnit.text, style, proper));
+      }
+
+      const result = [hook, ...bodies, conclusion];
+      result.recapCount = selectedUnits.filter((unit) => unit.kind === 'recap').length;
+      return result;
     }
     const imgCache = new Map();
     function loadImage(src) {
@@ -714,6 +909,7 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       if (fontsReady) return;
       try {
         await Promise.all([
+          document.fonts.load('900 64px Inter'),
           document.fonts.load('800 64px Inter'),
           document.fonts.load('600 26px Inter'),
           document.fonts.load('400 16px Inter')
@@ -737,8 +933,13 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       ctx.closePath();
     }
 
+    function applyFont(ctx, slide) {
+      ctx.font = `900 ${slide.size}px Inter, Arial, sans-serif`;
+      try { ctx.letterSpacing = `${(-slide.size * 0.018).toFixed(2)}px`; } catch (err) { /* canvas tanpa letterSpacing */ }
+    }
+
     function layoutText(ctx, slide) {
-      ctx.font = `800 ${slide.size}px Inter, Arial, sans-serif`;
+      applyFont(ctx, slide);
       const maxW = clamp(slide.wrap, 200, 1000);
       const words = String(slide.text || '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
       const lines = [];
@@ -750,8 +951,22 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       }
       if (current) lines.push(current);
       if (!lines.length) lines.push('');
-      const lineHeight = slide.size * 1.26;
+      const lineHeight = slide.size * 1.12;
       return { lines, lineHeight, totalH: lineHeight * lines.length, maxW };
+    }
+
+    function fitTextSize(ctx, slide, preferred) {
+      let size = clamp(preferred, 32, 140);
+      const hasSticker = !!(slide.sticker && slide.sticker.src);
+      const stickerTop = hasSticker
+        ? slide.sticker.y - (BASE_STICKER_H * (slide.sticker.scale || 1)) / 2 - 24
+        : H - 72;
+      while (size > 32) {
+        const { totalH } = layoutText(ctx, { ...slide, size });
+        if (slide.ty - totalH / 2 >= 84 && slide.ty + totalH / 2 <= stickerTop) break;
+        size -= 2;
+      }
+      return size;
     }
 
     function dashedBox(ctx, box, color, width = 2) {
@@ -797,11 +1012,13 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
             h *= k;
           }
           ctx.save();
-          ctx.translate(sticker.x, sticker.y);
+          const cx = clamp(sticker.x, w / 2, W - w / 2);
+          const cy = clamp(sticker.y, h / 2, H - h / 2);
+          ctx.translate(cx, cy);
           if (sticker.flip) ctx.scale(-1, 1);
           ctx.drawImage(img, -w / 2, -h / 2, w, h);
           ctx.restore();
-          stickerBox = { x: sticker.x - w / 2, y: sticker.y - h / 2, w, h };
+          stickerBox = { x: cx - w / 2, y: cy - h / 2, w, h };
         } catch (err) {
           stickerBox = null;
         }
@@ -812,7 +1029,7 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       const ty = slide.ty;
 
       ctx.save();
-      ctx.font = `800 ${slide.size}px Inter, Arial, sans-serif`;
+      applyFont(ctx, slide);
       ctx.fillStyle = slide.color || '#000000';
       ctx.textBaseline = 'middle';
       ctx.textAlign = slide.align || 'center';
@@ -824,10 +1041,10 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       });
       ctx.restore();
 
-      const barW = 76;
-      const barH = 9;
+      const barW = 96;
+      const barH = 12;
       const barX = clamp(tx - barW / 2, 24, W - barW - 24);
-      const barY = clamp(ty - totalH / 2 - 48, 24, H - barH - 24);
+      const barY = clamp(ty - totalH / 2 - 36 - barH, 24, H - barH - 24);
       roundRect(ctx, barX, barY, barW, barH, barH / 2);
       ctx.fillStyle = '#10b981';
       ctx.fill();
@@ -880,25 +1097,27 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       }
     }
 
+    function suggestSize(text) {
+      const count = wordsOf(text).length;
+      return count <= 6 ? 104 : count <= 10 ? 92 : count <= 14 ? 80 : count <= 18 ? 70 : count <= 22 ? 62 : 56;
+    }
+
     function makeSlide(text, index) {
-      const customs = state.stickers.filter((s) => s.custom);
-      const pool = customs.length ? customs : state.stickers;
-      const sticker = pool.length ? pool[index % pool.length] : null;
-      const wordCount = wordsOf(text).length;
-      const size = wordCount <= 8 ? 88 : wordCount <= 14 ? 74 : wordCount <= 20 ? 62 : 56;
+      const sticker = state.stickers.length ? state.stickers[index % state.stickers.length] : null;
+      const size = suggestSize(text);
       const onRight = index % 2 === 0;
       return {
         text,
         bg: '#FFFFFF',
         color: '#000000',
         size,
-        wrap: 880,
+        wrap: 840,
         align: 'center',
         tx: 540,
-        ty: 440,
+        ty: sticker ? 410 : 500,
         sticker: {
           src: sticker ? sticker.src : null,
-          x: onRight ? 852 : 228,
+          x: onRight ? 838 : 242,
           y: 852,
           scale: 1,
           flip: false
@@ -912,7 +1131,7 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       const grid = $('#grid');
       grid.classList.remove('hidden');
       $('#resultCount').textContent = `${count} slide`;
-      $('#zipBtn').disabled = true;
+      $('#downloadAllBtn').disabled = true;
       grid.innerHTML = Array.from({ length: count }).map(() => `
         <div class="overflow-hidden rounded-2xl border border-line bg-panel">
           <div class="skeleton aspect-square"></div>
@@ -950,28 +1169,33 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
         grid.classList.add('hidden');
         empty.classList.remove('hidden');
         $('#resultCount').textContent = 'Belum ada';
-        $('#zipBtn').disabled = true;
+        $('#downloadAllBtn').disabled = true;
         return;
       }
       empty.classList.add('hidden');
       grid.classList.remove('hidden');
       grid.innerHTML = state.slides.map((slide, index) => cardHTML(slide, index)).join('');
       $('#resultCount').textContent = `${count} slide`;
-      $('#zipBtn').disabled = false;
+      $('#downloadAllBtn').disabled = false;
     }
     const editorCanvas = $('#editorCanvas');
     let editorDrawToken = 0;
 
     function updateFlipUI() {
-      const on = !!(state.draft && state.draft.sticker && state.draft.sticker.flip);
+      const hasSticker = !!(state.draft && state.draft.sticker && state.draft.sticker.src);
+      const on = hasSticker && !!state.draft.sticker.flip;
       $('#edFlipState').textContent = on ? 'on' : 'off';
       $('#edFlip').classList.toggle('border-brand/50', on);
       $('#edFlip').classList.toggle('text-brand', on);
+      $('#edFlip').disabled = !hasSticker;
+      $('#edFlip').classList.toggle('opacity-40', !hasSticker);
+      $('#edFlip').classList.toggle('cursor-not-allowed', !hasSticker);
     }
 
     function syncEditorUI() {
       const d = state.draft;
       if (!d) return;
+      const hasSticker = !!(d.sticker && d.sticker.src);
       $('#edText').value = d.text;
       $('#edSize').value = d.size;
       $('#edSizeLabel').textContent = `${d.size} px`;
@@ -981,6 +1205,9 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       $('#edBg').value = d.bg;
       $('#edScale').value = d.sticker ? d.sticker.scale : 1;
       $('#edScaleLabel').textContent = `${Math.round((d.sticker ? d.sticker.scale : 1) * 100)}%`;
+      $('#edScale').disabled = !hasSticker;
+      $('#edScale').classList.toggle('opacity-40', !hasSticker);
+      $('#edScale').classList.toggle('cursor-not-allowed', !hasSticker);
       $('#edWordCount').textContent = `${wordsOf(d.text).length} kata`;
       $$('.align-btn').forEach((btn) => btn.classList.toggle('is-active', btn.dataset.align === d.align));
       updateFlipUI();
@@ -988,6 +1215,10 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
 
     function buildStickerGallery() {
       if (!state.draft) return;
+      if (!state.stickers.length) {
+        $('#edStickerGallery').innerHTML = '<p class="col-span-6 rounded-lg border border-dashed border-line bg-ink/40 px-3 py-3 text-[10px] leading-relaxed text-zinc-500">Belum ada karakter. Upload PNG transparan di panel kiri untuk menambahkannya.</p>';
+        return;
+      }
       const currentSrc = state.draft.sticker ? state.draft.sticker.src : null;
       $('#edStickerGallery').innerHTML = state.stickers.map((s, i) => `
         <button type="button" data-sticker-index="${i}" class="relative aspect-square overflow-hidden rounded-lg border ${s.src === currentSrc ? 'border-brand ring-2 ring-brand/30' : 'border-line'} bg-white transition hover:border-brand/60 active:scale-95" title="${escapeHTML(s.name)}">
@@ -1061,10 +1292,11 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       if (!state.draft || !state.boxes) return;
       const point = canvasPoint(ev);
       if (state.draft.sticker && state.draft.sticker.src && pointInBox(point, state.boxes.sticker, 16)) {
+        const box = state.boxes.sticker;
         state.drag = {
           type: 'sticker',
-          ox: point.x - state.draft.sticker.x,
-          oy: point.y - state.draft.sticker.y
+          ox: point.x - (box.x + box.w / 2),
+          oy: point.y - (box.y + box.h / 2)
         };
       } else if (pointInBox(point, state.boxes.text, 12)) {
         state.drag = {
@@ -1123,8 +1355,14 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
 
     $('#edText').addEventListener('input', (ev) => {
       if (!state.draft) return;
+      const prevCount = wordsOf(state.draft.text).length;
       state.draft.text = ev.target.value;
-      $('#edWordCount').textContent = `${wordsOf(ev.target.value).length} kata`;
+      const nextCount = wordsOf(ev.target.value).length;
+      if (Math.abs(nextCount - prevCount) >= 6) state.draft.size = suggestSize(ev.target.value);
+      state.draft.size = fitTextSize(editorCanvas.getContext('2d'), state.draft, state.draft.size);
+      $('#edSize').value = state.draft.size;
+      $('#edSizeLabel').textContent = `${state.draft.size} px`;
+      $('#edWordCount').textContent = `${nextCount} kata`;
       drawEditor();
     });
 
@@ -1208,7 +1446,9 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       try {
         await ensureFonts();
         const canvas = getWorkCanvas();
-        await paintSlide(canvas.getContext('2d'), draft, { index, total: state.slides.length });
+        const ctx = canvas.getContext('2d');
+        draft.size = fitTextSize(ctx, draft, draft.size);
+        await paintSlide(ctx, draft, { index, total: state.slides.length });
         draft.png = canvas.toDataURL('image/png');
         state.slides[index] = draft;
         closeEditor();
@@ -1286,11 +1526,20 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
         await new Promise((resolve) => setTimeout(resolve, 420));
 
         const points = summarize(material, count, style);
+        const recapCount = points.recapCount || 0;
+        const unique = new Set(points.map((point) => point.toLowerCase())).size;
         state.slides = points.map((text, index) => makeSlide(text, index));
         await renderAll(state.slides);
         renderGrid();
         hideProgress();
-        toast(`${state.slides.length} slide siap diedit & diunduh.`);
+        if (recapCount > 0) {
+          const corePoints = points.length - recapCount;
+          toast(`${points.length} slide dibuat. Materi cukup untuk ${corePoints} poin, sisanya slide pengingat.`, 'warn');
+        } else if (unique < points.length) {
+          toast(`${state.slides.length} slide dibuat. Materi terlalu pendek, beberapa poin diulang.`, 'warn');
+        } else {
+          toast(`${state.slides.length} slide siap diedit & diunduh.`);
+        }
       } catch (err) {
         console.error(err);
         hideProgress();
@@ -1307,10 +1556,11 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
         toast('Gunakan file PNG transparan (atau WebP).', 'warn');
         return;
       }
+      const added = [];
       for (const file of list) {
         try {
           const src = await readFileAsDataURL(file);
-          state.stickers.push({
+          added.push({
             id: `upload-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
             name: file.name.replace(/\.[^.]+$/, ''),
             src,
@@ -1320,10 +1570,33 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
           toast(`Gagal membaca ${file.name}.`, 'error');
         }
       }
-      renderStickerStrip();
-      if (state.draft) buildStickerGallery();
-      toast(`${list.length} karakter ditambahkan ke galeri.`);
       $('#stickerInput').value = '';
+      if (!added.length) {
+        toast('Tidak ada karakter yang bisa dipakai.', 'error');
+        return;
+      }
+      state.stickers.push(...added);
+      renderStickerStrip();
+      const targets = state.slides.filter((slide) => !slide.sticker || !slide.sticker.src);
+      if (targets.length) {
+        targets.forEach((slide, i) => {
+          if (!slide.sticker) slide.sticker = { x: 838, y: 852, scale: 1, flip: false, src: null };
+          if (slide.ty === 500) slide.ty = 410;
+          slide.sticker.x = state.slides.indexOf(slide) % 2 === 0 ? 838 : 242;
+          slide.sticker.src = added[i % added.length].src;
+        });
+        await renderAll(state.slides);
+        hideProgress();
+        renderGrid();
+        toast(`${added.length} karakter dipasang ke ${targets.length} slide.`);
+      } else {
+        toast(`${added.length} karakter ditambahkan ke galeri.`);
+      }
+      if (state.draft) {
+        buildStickerGallery();
+        syncEditorUI();
+        drawEditor();
+      }
     }
 
     function downloadSlide(index) {
@@ -1332,29 +1605,27 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
       downloadURL(slide.png, `slide-${pad2(index + 1)}.png`);
     }
 
-    async function downloadZip() {
-      if (!state.slides.length || state.generating || $('#zipBtn').disabled) return;
-      const btn = $('#zipBtn');
-      const label = $('#zipLabel');
+    let downloadingAll = false;
+    async function downloadAll() {
+      if (!state.slides.length || state.generating || downloadingAll || $('#downloadAllBtn').disabled) return;
+      const btn = $('#downloadAllBtn');
+      const label = $('#downloadAllLabel');
+      const total = state.slides.length;
+      downloadingAll = true;
       btn.disabled = true;
-      label.textContent = 'Menyiapkan ZIP...';
       try {
-        if (typeof JSZip === 'undefined') throw new Error('Library JSZip tidak termuat');
-        const zip = new JSZip();
-        state.slides.forEach((slide, index) => {
-          if (!slide.png) return;
-          zip.file(`slide-${pad2(index + 1)}.png`, slide.png.split(',')[1], { base64: true });
-        });
-        const blob = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(blob);
-        downloadURL(url, 'slidecraft-slides.zip');
-        setTimeout(() => URL.revokeObjectURL(url), 4000);
-        toast(`ZIP berisi ${state.slides.length} slide berhasil dibuat.`);
-      } catch (err) {
-        toast(`Gagal membuat ZIP: ${err.message}`, 'error');
+        for (let i = 0; i < total; i += 1) {
+          const slide = state.slides[i];
+          if (!slide || !slide.png) continue;
+          label.textContent = `Mengunduh ${i + 1}/${total}...`;
+          downloadURL(slide.png, `slide-${pad2(i + 1)}.png`);
+          await new Promise((resolve) => setTimeout(resolve, 320));
+        }
+        toast(`${total} PNG diunduh. Jika browser minta izin, pilih Izinkan.`);
       } finally {
+        downloadingAll = false;
         btn.disabled = false;
-        label.textContent = 'Download Semua (ZIP)';
+        label.textContent = 'Download Semua PNG';
       }
     }
 
@@ -1379,7 +1650,7 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
     });
 
     $('#generateBtn').addEventListener('click', generateSlides);
-    $('#zipBtn').addEventListener('click', downloadZip);
+    $('#downloadAllBtn').addEventListener('click', downloadAll);
 
     $('#grid').addEventListener('click', (ev) => {
       const editBtn = ev.target.closest('[data-edit]');
@@ -1392,7 +1663,7 @@ Tidur cukup 7 sampai 9 jam memperkuat konsolidasi memori. Jangan begadang sebelu
     });
 
     function init() {
-      state.stickers = DEFAULT_MASCOTS.slice();
+      state.stickers = [];
       renderStickerStrip();
       $('#charCount').textContent = $('#material').value.length;
       $('#slideCountValue').textContent = $('#slideCount').value;
